@@ -3,7 +3,12 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import type { HermesReadDirResult } from '@/global'
 import type * as HermesModule from '@/hermes'
 
-import { discoverRuntimePlugins, watchRuntimePlugins } from './runtime-loader'
+import {
+  discoverRuntimePlugins,
+  runtimeImportPreludeSpecifiers,
+  runtimeModuleSpecifiers,
+  watchRuntimePlugins
+} from './runtime-loader'
 
 // getStatus would supply the connected backend's hermes_home — a REMOTE path in
 // remote mode. The disk scanner must NOT derive the plugin root from it (#66899).
@@ -74,4 +79,30 @@ describe('watchRuntimePlugins dir watch (#66899)', () => {
     expect(watchDirectory).not.toHaveBeenCalledWith('/remote/box/.hermes/desktop-plugins')
     expect(getStatus).not.toHaveBeenCalled()
   })
+})
+
+it('runtime plugin import discovery ignores from-like library source text', async () => {
+  const source = `
+    import { jsx } from 'react/jsx-runtime'
+    function composition(cm, input) {
+      const start = cm.getCursor("from")
+      if (input.composing) input.composing.range.clear()
+      return start
+    }
+  `
+
+  expect((await runtimeModuleSpecifiers(source)).map(({ specifier }) => specifier)).toEqual(['react/jsx-runtime'])
+})
+
+it('runtime import prelude fallback ignores bundled library source text', () => {
+  const source = `import { jsx } from 'react/jsx-runtime'
+import { Button } from '@hermes/plugin-sdk'
+const start = cm.getCursor("from")
+if (input.composing) input.composing.range.clear()
+`
+
+  expect(runtimeImportPreludeSpecifiers(source).map(({ specifier }) => specifier)).toEqual([
+    'react/jsx-runtime',
+    '@hermes/plugin-sdk'
+  ])
 })

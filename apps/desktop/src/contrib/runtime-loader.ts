@@ -29,6 +29,7 @@
 
 import { installPluginSdk, sdkImportMap } from '@/sdk/runtime'
 import { notifyError } from '@/store/notifications'
+import { init, parse } from 'es-module-lexer'
 
 import { createPluginContext, type HermesPlugin } from './plugin'
 import { dropPlugin, pluginActive, type PluginKind, publishPlugin } from './plugins-store'
@@ -45,30 +46,79 @@ interface LoadOptions {
 /** Live runtime plugins: id -> disposers (unload/reload support). */
 const loaded = new Map<string, (() => void)[]>()
 
-// Matches the specifier of a static `from '…'`, a side-effect `import '…'`, or
-// a dynamic `import('…')` — anchored to import/export syntax so a bare string
-// literal or comment (e.g. `notify('react')`) is never touched.
-const importSpecifierRe = () => /(from\s*|import\s*\(\s*|import\s+)(['"])([^'"]+)\2/g
+type ModuleSpecifier = {
+  end: number
+  specifier: string
+  start: number
+}
+
+/**
+ * Parse actual ESM imports instead of scanning source with a regular
+ * expression. Runtime plugins may bundle libraries such as GrapesJS; their
+ * ordinary strings/code can contain text like `getCursor("from")`, which is
+ * not an import and must not be rejected by the loader.
+ */
+export async function runtimeModuleSpecifiers(source: string): Promise<ModuleSpecifier[]> {
+  try {
+    await init
+    const [imports] = parse(source)
+
+    return imports.flatMap(entry =>
+      typeof entry.n === 'string'
+        ? [{ end: entry.e, specifier: entry.n, start: entry.s }]
+        : []
+    )
+  } catch {
+    // Electron's bundled lexer can fail on a large, otherwise valid, bundled
+    // dependency. Runtime plugins conventionally keep their static imports in
+    // a contiguous one-line prelude, so use that narrow fallback rather than
+    // scanning the whole source and mistaking library code for an import.
+    return runtimeImportPreludeSpecifiers(source)
+  }
+}
+
+/** Parse only the conventional static-import prelude at the start of a plugin. */
+export function runtimeImportPreludeSpecifiers(source: string): ModuleSpecifier[] {
+  const specifiers: ModuleSpecifier[] = []
+  let offset = 0
+
+  for (const line of source.split(/\r?\n/)) {
+    const match = /^\s*import\s+(?:[^'";]*?\s+from\s+)?(['"])([^'"]+)\1\s*;?\s*$/.exec(line)
+    if (!match) break
+
+    const specifier = match[2]
+    const start = offset + line.lastIndexOf(specifier)
+    specifiers.push({ end: start + specifier.length, specifier, start })
+    offset += line.length + 1
+  }
+
+  return specifiers
+}
 
 /** Rewrite ONLY mapped import specifiers (@hermes/plugin-sdk, react*) to their
  *  live shim blob URLs — never occurrences inside strings/comments. */
-function rewriteSpecifiers(source: string): string {
+function rewriteSpecifiers(source: string, specifiers: ModuleSpecifier[]): string {
   const map = sdkImportMap()
 
-  return source.replace(importSpecifierRe(), (whole, pre, quote, spec) =>
-    map[spec] ? `${pre}${quote}${map[spec]}${quote}` : whole
-  )
+  return [...specifiers]
+    .sort((a, b) => b.start - a.start)
+    .reduce(
+      (rewritten, { end, specifier, start }) =>
+        map[specifier]
+          ? `${rewritten.slice(0, start)}${map[specifier]}${rewritten.slice(end)}`
+          : rewritten,
+      source
+    )
 }
 
 /** Bare import specifiers the loader can't resolve (not relative/URL, not in
  *  the SDK map). Surfaced up-front so they don't fail as a cryptic native
  *  "Failed to resolve module specifier" from the blob import. */
-function unsupportedImports(source: string): string[] {
+function unsupportedImports(specifiers: ModuleSpecifier[]): string[] {
   const map = sdkImportMap()
   const bare = new Set<string>()
 
-  for (const m of source.matchAll(importSpecifierRe())) {
-    const spec = m[3]
+  for (const { specifier: spec } of specifiers) {
 
     // Skip relative/absolute (./ ../ /) and any URL scheme (blob: http(s):).
     if (spec && !/^[./]/.test(spec) && !/^[a-z][a-z0-9+.-]*:/i.test(spec) && !map[spec]) {
@@ -111,7 +161,8 @@ export async function loadRuntimePlugin(
       throw new Error(`integrity check failed for ${origin}`)
     }
 
-    const unsupported = unsupportedImports(source)
+    const specifiers = await runtimeModuleSpecifiers(source)
+    const unsupported = unsupportedImports(specifiers)
 
     if (unsupported.length > 0) {
       throw new Error(
@@ -120,7 +171,9 @@ export async function loadRuntimePlugin(
       )
     }
 
-    const url = URL.createObjectURL(new Blob([rewriteSpecifiers(source)], { type: 'text/javascript' }))
+    const url = URL.createObjectURL(
+      new Blob([rewriteSpecifiers(source, specifiers)], { type: 'text/javascript' })
+    )
 
     let mod: { default?: HermesPlugin }
 

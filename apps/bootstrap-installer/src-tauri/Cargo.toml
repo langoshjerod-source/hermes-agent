@@ -1,8 +1,8 @@
 [package]
 name = "hermes-bootstrap"
 version = "0.0.1"
-description = "Hermes Setup — signed installer that drives scripts/install.ps1"
-authors = ["Nous Research <info@nousresearch.com>"]
+description = "萌学伴安装与更新程序"
+authors = ["MengXueBan"]
 edition = "2021"
 rust-version = "1.77"
 

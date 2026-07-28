@@ -97,6 +97,81 @@ export const nousTheme: DesktopTheme = {
   }
 }
 
+/**
+ * MengXueBan — the official green mascot palette adapted to Desktop tokens.
+ *
+ * The core green, sprout lime, and star yellow come from the current MengXueBan
+ * logo. Neutral surfaces follow the official site's ink/mist/cloud system so
+ * the desktop reads as the same product without turning every pane green.
+ */
+export const mengxuebanTheme: DesktopTheme = {
+  name: 'mengxueban',
+  label: '萌学伴',
+  description: '萌学伴官方绿色、嫩芽色与星光黄品牌主题',
+  colors: {
+    background: '#F6FAF8',
+    foreground: '#20302E',
+    card: '#FFFFFF',
+    cardForeground: '#20302E',
+    muted: '#EEF7F5',
+    mutedForeground: '#667773',
+    popover: '#FFFFFF',
+    popoverForeground: '#20302E',
+    primary: '#007A48',
+    primaryForeground: '#FFFFFF',
+    secondary: '#E4F5EC',
+    secondaryForeground: '#075D3D',
+    accent: '#E6F7ED',
+    accentForeground: '#075D3D',
+    border: '#D8E7E4',
+    input: '#BFD8D1',
+    ring: '#19A85F',
+    midground: '#19A85F',
+    composerRing: '#19A85F',
+    warm: '#FFC20E',
+    destructive: '#B6423C',
+    destructiveForeground: '#FFFFFF',
+    sidebarBackground: '#EEF7F5',
+    sidebarBorder: '#D8E7E4',
+    userBubble: '#E8F7EE',
+    userBubbleBorder: '#CBE7D7'
+  },
+  darkColors: {
+    background: '#0D1F19',
+    foreground: '#ECF8F1',
+    card: '#142A21',
+    cardForeground: '#ECF8F1',
+    muted: '#1C352A',
+    mutedForeground: '#9AB4A8',
+    popover: '#173126',
+    popoverForeground: '#F1FAF5',
+    primary: '#8BD93F',
+    primaryForeground: '#10230D',
+    secondary: '#1C3A2D',
+    secondaryForeground: '#D9F3E2',
+    accent: '#204332',
+    accentForeground: '#D9F3E2',
+    border: '#2B4B3D',
+    input: '#3C5E4E',
+    ring: '#42C56B',
+    midground: '#42C56B',
+    composerRing: '#42C56B',
+    warm: '#FFC20E',
+    destructive: '#E06D64',
+    destructiveForeground: '#261311',
+    sidebarBackground: '#091812',
+    sidebarBorder: '#244233',
+    userBubble: '#193D2C',
+    userBubbleBorder: '#2D5B43'
+  },
+  typography: {
+    fontSans:
+      '"Avenir Next", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Segoe UI", system-ui, sans-serif, ' +
+      EMOJI_FALLBACK,
+    fontMono: `"JetBrains Mono", "SF Mono", "Cascadia Code", ui-monospace, monospace, ${EMOJI_FALLBACK}`
+  }
+}
+
 /** Deep blue-violet with cool accents. Matches the dashboard midnight theme. */
 export const midnightTheme: DesktopTheme = {
   name: 'midnight',
@@ -278,6 +353,7 @@ export const slateTheme: DesktopTheme = {
 }
 
 export const BUILTIN_THEMES: Record<string, DesktopTheme> = {
+  mengxueban: mengxuebanTheme,
   nous: nousTheme,
   midnight: midnightTheme,
   ember: emberTheme,
@@ -289,4 +365,4 @@ export const BUILTIN_THEMES: Record<string, DesktopTheme> = {
 export const BUILTIN_THEME_LIST = Object.values(BUILTIN_THEMES)
 
 /** Skin used when nothing is persisted or the persisted name is retired. */
-export const DEFAULT_SKIN_NAME = 'nous'
+export const DEFAULT_SKIN_NAME = 'mengxueban'

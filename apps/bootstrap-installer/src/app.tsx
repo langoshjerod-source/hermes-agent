@@ -8,7 +8,7 @@ import Welcome from './routes/welcome'
 import { $bootstrap, $route, initialize } from './store'
 
 /*
- * App shell — Hermes Setup.
+ * App shell — MengXueBan Setup.
  *
  * No header chrome (the OS title bar already says "Hermes Setup"; an
  * in-window repeat of the H mark + words was redundant slop).
@@ -24,7 +24,7 @@ export default function App() {
   }, [])
 
   return (
-    <div className="relative flex h-full flex-col overflow-hidden bg-background text-foreground">
+    <div className="mxb-installer-bg relative flex h-full flex-col overflow-hidden bg-background text-foreground">
       <main className="relative z-10 flex flex-1 flex-col overflow-hidden">
         {route === 'welcome' && <Welcome />}
         {route === 'progress' && <Progress bootstrap={bootstrap} />}

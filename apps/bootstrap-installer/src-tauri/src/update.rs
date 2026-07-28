@@ -68,11 +68,7 @@ pub async fn start_update(app: AppHandle) -> Result<(), String> {
     {
         // Already running: re-emit the manifest so a duplicate startUpdate()
         // call (which resets the frontend store) can recover its stage list.
-        let target_app = if cfg!(target_os = "macos") {
-            target_app_from_args(std::env::args().skip(1))
-        } else {
-            None
-        };
+        let target_app = target_app_from_args(std::env::args().skip(1));
         emit(
             &app,
             BootstrapEvent::Manifest {
@@ -285,11 +281,10 @@ async fn run_update(app: AppHandle) -> Result<()> {
     let update_branch = update_branch_from_args(std::env::args().skip(1))
         .or_else(|| option_env_string("BUILD_PIN_BRANCH"))
         .unwrap_or_else(|| "main".to_string());
-    let target_app = if cfg!(target_os = "macos") {
-        target_app_from_args(std::env::args().skip(1))
-    } else {
-        None
-    };
+    let target_app = target_app_from_args(std::env::args().skip(1));
+    let preserve_branded_desktop = target_app
+        .as_deref()
+        .is_some_and(is_mengxueban_desktop_target);
 
     let hermes = resolve_hermes(&install_root).ok_or_else(|| {
         let msg = format!(
@@ -351,8 +346,7 @@ async fn run_update(app: AppHandle) -> Result<()> {
         &format!("[update] updating against branch {update_branch}"),
     );
     let child_env = update_child_env(&install_root);
-    let mut update_args: Vec<String> =
-        vec!["update".into(), "--yes".into(), "--gateway".into()];
+    let mut update_args: Vec<String> = vec!["update".into(), "--yes".into(), "--gateway".into()];
     // --force skips `hermes update`'s Windows running-exe guard (which would
     // `sys.exit(2)` and dead-end the handoff). By contract the desktop has
     // already exited and waited for the install locks to clear before launching
@@ -467,6 +461,33 @@ async fn run_update(app: AppHandle) -> Result<()> {
         }
     }
 
+    // MengXueBan is a branded desktop shell over the shared Hermes runtime.
+    // Rebuilding from the managed upstream checkout would produce Hermes.app /
+    // Hermes.exe and overwrite or bypass the branded UI. Update the runtime,
+    // retain the installed shell, and relaunch the exact target that handed off.
+    if preserve_branded_desktop {
+        emit_log(
+            &app,
+            Some("rebuild"),
+            LogStream::Stdout,
+            "[update] MengXueBan branded shell detected; preserving the installed desktop app",
+        );
+        emit_stage(&app, "rebuild", StageState::Skipped, Some(0), None);
+        emit_stage(&app, "install", StageState::Skipped, Some(0), None);
+        emit(
+            &app,
+            BootstrapEvent::Complete {
+                install_root: install_root.to_string_lossy().into_owned(),
+                marker: None,
+            },
+        );
+
+        if let Some(target_app) = target_app {
+            launch_target_and_exit(&app, &target_app).await?;
+        }
+        return Ok(());
+    }
+
     // ---- stage 3: hermes desktop --build-only ----------------------------
     // `hermes update` deliberately does NOT build apps/desktop (it installs
     // repo-root deps with --workspaces=false). This is the rebuild it skips.
@@ -534,7 +555,13 @@ async fn run_update(app: AppHandle) -> Result<()> {
         );
         return Err(anyhow!(msg));
     }
-    emit_stage(&app, "rebuild", StageState::Succeeded, Some(rebuild_ms), None);
+    emit_stage(
+        &app,
+        "rebuild",
+        StageState::Succeeded,
+        Some(rebuild_ms),
+        None,
+    );
 
     let launch_target = if let Some(target_app) = target_app {
         let started = Instant::now();
@@ -589,7 +616,7 @@ async fn run_update(app: AppHandle) -> Result<()> {
     _update_marker.complete();
 
     if let Some(target_app) = launch_target {
-        if let Err(err) = launch_macos_app_and_exit(&app, &target_app).await {
+        if let Err(err) = launch_target_and_exit(&app, &target_app).await {
             emit_log(
                 &app,
                 None,
@@ -597,8 +624,11 @@ async fn run_update(app: AppHandle) -> Result<()> {
                 &format!("[update] could not auto-launch desktop: {err}. Launch Hermes manually."),
             );
         }
-    } else if let Err(err) =
-        crate::bootstrap::launch_hermes_desktop(app.clone(), install_root.to_string_lossy().into_owned()).await
+    } else if let Err(err) = crate::bootstrap::launch_hermes_desktop(
+        app.clone(),
+        install_root.to_string_lossy().into_owned(),
+    )
+    .await
     {
         // Launch failed: don't hard-fail the update (it succeeded); surface a
         // log line so the success screen can still tell the user to launch
@@ -638,7 +668,12 @@ pub(crate) async fn wait_for_install_locks_free(install_root: &Path, app: &AppHa
     let lock_targets = install_lock_probe_paths(install_root);
     let deadline = Instant::now() + DESKTOP_EXIT_WAIT;
 
-    emit_log(app, Some(stage), LogStream::Stdout, "[handoff] waiting for Hermes to exit…");
+    emit_log(
+        app,
+        Some(stage),
+        LogStream::Stdout,
+        "[handoff] waiting for Hermes to exit…",
+    );
 
     loop {
         let locked = locked_paths(&lock_targets);
@@ -700,16 +735,35 @@ fn desktop_app_payload_paths(install_root: &Path) -> Vec<PathBuf> {
     let release = install_root.join("apps").join("desktop").join("release");
     if cfg!(target_os = "windows") {
         vec![
-            release.join("win-unpacked").join("resources").join("app.asar"),
-            release.join("win-arm64-unpacked").join("resources").join("app.asar"),
+            release
+                .join("win-unpacked")
+                .join("resources")
+                .join("app.asar"),
+            release
+                .join("win-arm64-unpacked")
+                .join("resources")
+                .join("app.asar"),
         ]
     } else if cfg!(target_os = "macos") {
         vec![
-            release.join("mac").join("Hermes.app").join("Contents").join("Resources").join("app.asar"),
-            release.join("mac-arm64").join("Hermes.app").join("Contents").join("Resources").join("app.asar"),
+            release
+                .join("mac")
+                .join("Hermes.app")
+                .join("Contents")
+                .join("Resources")
+                .join("app.asar"),
+            release
+                .join("mac-arm64")
+                .join("Hermes.app")
+                .join("Contents")
+                .join("Resources")
+                .join("app.asar"),
         ]
     } else {
-        vec![release.join("linux-unpacked").join("resources").join("app.asar")]
+        vec![release
+            .join("linux-unpacked")
+            .join("resources")
+            .join("app.asar")]
     }
 }
 
@@ -718,7 +772,11 @@ fn locked_paths(paths: &[PathBuf]) -> Vec<PathBuf> {
 }
 
 fn format_locked_paths(paths: &[PathBuf]) -> String {
-    paths.iter().map(|p| p.display().to_string()).collect::<Vec<_>>().join(", ")
+    paths
+        .iter()
+        .map(|p| p.display().to_string())
+        .collect::<Vec<_>>()
+        .join(", ")
 }
 
 /// Force-kill any `hermes.exe` other than this process. Windows-only; a no-op
@@ -766,7 +824,11 @@ fn is_locked(path: &Path) -> bool {
     if !path.exists() {
         return false;
     }
-    match std::fs::OpenOptions::new().read(true).write(true).open(path) {
+    match std::fs::OpenOptions::new()
+        .read(true)
+        .write(true)
+        .open(path)
+    {
         Ok(_) => false,
         Err(_) => true,
     }
@@ -842,7 +904,10 @@ async fn run_streamed(
         emit_log(app, stage_owned.as_deref(), LogStream::Stderr, &l);
     }
 
-    let status = child.wait().await.map_err(|e| anyhow!("waiting for child: {e}"))?;
+    let status = child
+        .wait()
+        .await
+        .map_err(|e| anyhow!("waiting for child: {e}"))?;
     Ok(CmdResult {
         exit_code: status.code(),
     })
@@ -869,9 +934,17 @@ fn resolve_hermes(install_root: &Path) -> Option<PathBuf> {
         return Some(shim);
     }
     // PATH fallback. which-style probe via env, kept dependency-free.
-    let exe = if cfg!(target_os = "windows") { "hermes.exe" } else { "hermes" };
+    let exe = if cfg!(target_os = "windows") {
+        "hermes.exe"
+    } else {
+        "hermes"
+    };
     if let Ok(path) = std::env::var("PATH") {
-        let sep = if cfg!(target_os = "windows") { ';' } else { ':' };
+        let sep = if cfg!(target_os = "windows") {
+            ';'
+        } else {
+            ':'
+        };
         for dir in path.split(sep) {
             let cand = Path::new(dir).join(exe);
             if cand.exists() {
@@ -937,7 +1010,15 @@ where
 {
     arg_value_from_args(args, "--target-app")
         .map(PathBuf::from)
-        .filter(|p| p.extension().and_then(|e| e.to_str()) == Some("app"))
+        .filter(|p| matches!(p.extension().and_then(|e| e.to_str()), Some("app" | "exe")))
+}
+
+fn is_mengxueban_desktop_target(path: &Path) -> bool {
+    // Parse both separators explicitly so a Windows target passed through a
+    // macOS cross-build/test is classified the same way as on Windows.
+    let raw = path.to_string_lossy();
+    let file_name = raw.rsplit(['/', '\\']).next().unwrap_or_default();
+    file_name == "萌学伴.app" || file_name.eq_ignore_ascii_case("MengXueBan.exe")
 }
 
 fn arg_value_from_args<I, S>(args: I, name: &str) -> Option<String>
@@ -970,12 +1051,17 @@ async fn install_macos_app_update(
         ));
     }
 
-    let rebuilt_app = crate::bootstrap::resolve_hermes_desktop_app(install_root).ok_or_else(|| {
-        anyhow!(
-            "desktop rebuild succeeded but no Hermes.app was found under {}",
-            install_root.join("apps").join("desktop").join("release").display()
-        )
-    })?;
+    let rebuilt_app =
+        crate::bootstrap::resolve_hermes_desktop_app(install_root).ok_or_else(|| {
+            anyhow!(
+                "desktop rebuild succeeded but no Hermes.app was found under {}",
+                install_root
+                    .join("apps")
+                    .join("desktop")
+                    .join("release")
+                    .display()
+            )
+        })?;
 
     let same = match (rebuilt_app.canonicalize(), target_app.canonicalize()) {
         (Ok(a), Ok(b)) => a == b,
@@ -1073,7 +1159,10 @@ async fn swap_in_new_bundle(tmp: &Path, target: &Path, old: &Path) -> Result<()>
             let _ = tokio::fs::rename(old, target).await;
         }
         remove_dir_if_exists(tmp).await;
-        return Err(anyhow!("installing updated app at {}: {err}", target.display()));
+        return Err(anyhow!(
+            "installing updated app at {}: {err}",
+            target.display()
+        ));
     }
     remove_dir_if_exists(old).await;
     Ok(())
@@ -1094,17 +1183,11 @@ async fn remove_dir_if_exists(path: &Path) {
     }
 }
 
-#[cfg(target_os = "macos")]
-async fn launch_macos_app_and_exit(app: &AppHandle, target_app: &Path) -> Result<()> {
-    crate::bootstrap::open_macos_app_detached(target_app)
+async fn launch_target_and_exit(app: &AppHandle, target_app: &Path) -> Result<()> {
+    crate::bootstrap::spawn_desktop_target(target_app)
         .map_err(|e| anyhow!("launching {}: {e}", target_app.display()))?;
     tokio::time::sleep(std::time::Duration::from_millis(150)).await;
     app.exit(0);
-    Ok(())
-}
-
-#[cfg(not(target_os = "macos"))]
-async fn launch_macos_app_and_exit(_app: &AppHandle, _target_app: &Path) -> Result<()> {
     Ok(())
 }
 
@@ -1415,7 +1498,7 @@ mod tests {
         assert_eq!(
             with_install.last().map(|s| s.name.as_str()),
             Some("install"),
-            "the macOS app-swap is the final stage when present"
+            "the branded app relaunch/install is the final stage when present"
         );
         assert_eq!(
             with_install.len(),
@@ -1426,8 +1509,14 @@ mod tests {
 
     #[test]
     fn rebuild_retries_only_on_failure() {
-        assert!(!rebuild_needs_retry(Some(0)), "a clean rebuild must not retry");
-        assert!(rebuild_needs_retry(Some(1)), "a failed rebuild retries once");
+        assert!(
+            !rebuild_needs_retry(Some(0)),
+            "a clean rebuild must not retry"
+        );
+        assert!(
+            rebuild_needs_retry(Some(1)),
+            "a failed rebuild retries once"
+        );
         assert!(
             rebuild_needs_retry(None),
             "a killed/signalled rebuild (no exit code) retries once"
@@ -1435,12 +1524,32 @@ mod tests {
     }
 
     #[test]
-    fn parses_only_app_targets() {
+    fn parses_only_desktop_app_targets() {
         assert_eq!(
             target_app_from_args(["--update", "--target-app", "/Applications/Hermes.app"]),
             Some(PathBuf::from("/Applications/Hermes.app"))
         );
-        assert_eq!(target_app_from_args(["--target-app", "/tmp/not-an-app"]), None);
+        assert_eq!(
+            target_app_from_args(["--target-app=C:\\Apps\\MengXueBan.exe"]),
+            Some(PathBuf::from("C:\\Apps\\MengXueBan.exe"))
+        );
+        assert_eq!(
+            target_app_from_args(["--target-app", "/tmp/not-an-app"]),
+            None
+        );
+    }
+
+    #[test]
+    fn detects_mengxueban_targets_without_claiming_upstream_hermes() {
+        assert!(is_mengxueban_desktop_target(Path::new(
+            "/Applications/萌学伴.app"
+        )));
+        assert!(is_mengxueban_desktop_target(Path::new(
+            "C:\\Apps\\MengXueBan.exe"
+        )));
+        assert!(!is_mengxueban_desktop_target(Path::new(
+            "/Applications/Hermes.app"
+        )));
     }
 
     // Helpers for the swap tests: make a throwaway dir tree we can rename.
@@ -1503,8 +1612,14 @@ mod tests {
 
         let result = swap_in_new_bundle(&tmp, &target, &old).await;
 
-        assert!(result.is_err(), "swap should fail when neither move can complete");
-        assert!(target.exists(), "original app must NOT be deleted on failure");
+        assert!(
+            result.is_err(),
+            "swap should fail when neither move can complete"
+        );
+        assert!(
+            target.exists(),
+            "original app must NOT be deleted on failure"
+        );
         assert_eq!(
             std::fs::read_to_string(target.join("marker.txt")).unwrap(),
             "OLD",
@@ -1526,12 +1641,18 @@ mod tests {
         let result = swap_in_new_bundle(&tmp, &target, &old).await;
 
         assert!(result.is_err());
-        assert!(target.exists(), "original must be restored after failed install");
+        assert!(
+            target.exists(),
+            "original must be restored after failed install"
+        );
         assert_eq!(
             std::fs::read_to_string(target.join("marker.txt")).unwrap(),
             "OLD"
         );
-        assert!(!old.exists(), "backup should be rolled back, not left behind");
+        assert!(
+            !old.exists(),
+            "backup should be rolled back, not left behind"
+        );
         let _ = std::fs::remove_dir_all(&base);
     }
 }

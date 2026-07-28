@@ -1,5 +1,6 @@
 /*
- * Hermes Setup — defer entirely to the desktop's styles.css.
+ * MengXueBan Setup — reuse the desktop token system, then paint the official
+ * MengXueBan seeds below so the standalone updater cannot fall back to Nous.
  *
  * Rather than re-implement the Hermes design system (and inevitably drift
  * from it), we import apps/desktop/src/styles.css wholesale. The desktop
@@ -52,8 +53,81 @@
   );
 }
 
+:root {
+  color-scheme: light;
+
+  --theme-foreground: #20302e;
+  --theme-primary: #007a48;
+  --theme-secondary: #19a85f;
+  --theme-accent-soft: #dff5e8;
+  --theme-midground: #19a85f;
+  --theme-warm: #ffc20e;
+  --theme-background-seed: #f6faf8;
+  --theme-sidebar-seed: #eef7f5;
+  --theme-card-seed: #ffffff;
+  --theme-elevated-seed: #ffffff;
+  --theme-bubble-seed: #f3faf6;
+  --dt-primary-foreground: #ffffff;
+  --dt-destructive: #c9473a;
+  --dt-destructive-foreground: #ffffff;
+}
+
+.mxb-installer-bg::before,
+.mxb-installer-bg::after {
+  position: absolute;
+  z-index: 0;
+  content: '';
+  pointer-events: none;
+  border-radius: 999px;
+  filter: blur(0.25rem);
+}
+
+.mxb-installer-bg::before {
+  top: -12rem;
+  right: -8rem;
+  width: 30rem;
+  height: 30rem;
+  background: radial-gradient(circle, color-mix(in srgb, #8bd93f 18%, transparent), transparent 68%);
+}
+
+.mxb-installer-bg::after {
+  bottom: -14rem;
+  left: -10rem;
+  width: 34rem;
+  height: 34rem;
+  background: radial-gradient(circle, color-mix(in srgb, #19a85f 13%, transparent), transparent 70%);
+}
+
+.mxb-installer-mark {
+  animation:
+    mxb-installer-grow 720ms cubic-bezier(0.16, 1, 0.3, 1) both,
+    mxb-installer-breathe 3s ease-in-out 720ms infinite;
+  box-shadow: 0 1rem 3rem color-mix(in srgb, #007a48 22%, transparent);
+}
+
+@keyframes mxb-installer-grow {
+  from {
+    transform: translateY(1rem) scale(0.68) rotate(-5deg);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0) scale(1) rotate(0);
+    opacity: 1;
+  }
+}
+
+@keyframes mxb-installer-breathe {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-0.28rem);
+  }
+}
+
 /*
- * Dark appearance — Nous dark seeds.
+ * Dark appearance — MengXueBan forest seeds.
  *
  * The imported desktop :root.dark only flips the per-mode mix knobs + neutral
  * chrome; the seed COLORS are normally painted at runtime by the desktop's
@@ -69,20 +143,20 @@
 :root.dark {
   color-scheme: dark;
 
-  --theme-foreground: #ffe6cb;
-  --theme-primary: #ffe6cb;
-  --theme-secondary: #1b45a4;
-  --theme-accent-soft: #1540b1;
-  --theme-midground: #0053fd;
-  --theme-warm: #ffe6cb;
-  --theme-background-seed: #0d2f86;
-  --theme-sidebar-seed: #09286f;
-  --theme-card-seed: #12378f;
-  --theme-elevated-seed: #123a96;
-  --theme-bubble-seed: #143b91;
+  --theme-foreground: #eef8f2;
+  --theme-primary: #8bd93f;
+  --theme-secondary: #20b967;
+  --theme-accent-soft: #173b2b;
+  --theme-midground: #42c56b;
+  --theme-warm: #ffc20e;
+  --theme-background-seed: #0d1f19;
+  --theme-sidebar-seed: #10271e;
+  --theme-card-seed: #142b22;
+  --theme-elevated-seed: #183428;
+  --theme-bubble-seed: #163126;
 
   /* Non-derived shadcn tokens applyTheme() paints inline (Nous dark values). */
-  --dt-primary-foreground: #0d2f86;
+  --dt-primary-foreground: #102018;
   --dt-destructive: #c0473a;
   --dt-destructive-foreground: #fef2f2;
 }

@@ -6,13 +6,7 @@ import { useEffect, useRef, useState } from 'react'
 import { BrandMark } from '../components/brand-mark'
 import { Button } from '../components/button'
 import { Loader } from '../components/loader'
-import {
-  $mode,
-  $progress,
-  type BootstrapStateModel,
-  cancelInstall,
-  type StageState
-} from '../store'
+import { $mode, $progress, type BootstrapStateModel, cancelInstall, type StageState } from '../store'
 
 interface ProgressProps {
   bootstrap: BootstrapStateModel
@@ -50,11 +44,11 @@ export default function ProgressScreen({ bootstrap }: ProgressProps) {
   }, [bootstrap.status])
 
   const isUpdate = mode === 'update'
-  const title = bootstrap.status === 'completed' ? 'Done' : isUpdate ? 'Updating Hermes' : 'Setting up Hermes Agent'
+  const title = bootstrap.status === 'completed' ? '已完成' : isUpdate ? '正在更新萌学伴' : '正在安装萌学伴'
 
   const description = isUpdate
-    ? 'Hermes is updating to the latest version — this only takes a moment.'
-    : 'This is a one-time setup. The Hermes installer is downloading dependencies and configuring your machine. Subsequent launches will skip this step.'
+    ? '正在更新智能内核并保留你的萌学伴桌面皮肤，请稍候。'
+    : '首次安装需要下载运行组件并完成系统配置，后续启动无需重复安装。'
 
   const pct = Math.round(progress.fraction * 100)
 
@@ -77,7 +71,7 @@ export default function ProgressScreen({ bootstrap }: ProgressProps) {
           <div className="mb-4">
             <div className="mb-1 flex items-center justify-between text-xs text-muted-foreground">
               <span className={clsx(bootstrap.status === 'running' && 'shimmer')}>
-                {progress.done} of {progress.total} steps complete
+                已完成 {progress.done}/{progress.total} 步
               </span>
               <span className="tabular-nums">{pct}%</span>
             </div>
@@ -93,10 +87,12 @@ export default function ProgressScreen({ bootstrap }: ProgressProps) {
               muted. Running loader overhangs left so labels stay aligned; the
               terminal check/cross sits right of the label. */}
           <ol className="space-y-0.5">
-            {bootstrap.stageOrder.map((name) => {
+            {bootstrap.stageOrder.map(name => {
               const rec = bootstrap.stages[name]
 
-              if (!rec) {return null}
+              if (!rec) {
+                return null
+              }
 
               const meta =
                 rec.state === 'running' && rec.startedAt != null
@@ -109,14 +105,12 @@ export default function ProgressScreen({ bootstrap }: ProgressProps) {
                 <li
                   className={clsx(
                     'flex items-center gap-2.5 px-3 py-1.5 text-sm',
-                    rec.state === 'running'
-                      ? 'font-medium text-foreground'
-                      : 'text-muted-foreground'
+                    rec.state === 'running' ? 'font-medium text-foreground' : 'text-muted-foreground'
                   )}
                   key={name}
                 >
                   {rec.state === 'running' && <Loader className="-ml-2 size-6 shrink-0" />}
-                  <span className="flex-1 truncate">{rec.info.title}</span>
+                  <span className="flex-1 truncate">{stageTitle(name, rec.info.title)}</span>
                   {meta && <span className="text-xs tabular-nums text-muted-foreground/70">{meta}</span>}
                   <StateIcon state={rec.state ?? null} />
                 </li>
@@ -128,8 +122,8 @@ export default function ProgressScreen({ bootstrap }: ProgressProps) {
         {showLogs && (
           <div className="flex w-1/2 flex-col border-l border-(--stroke-nous)">
             <div className="flex shrink-0 items-center justify-between border-b border-(--stroke-nous) px-3 py-2 text-xs">
-              <span className="font-medium text-foreground/80">Live output</span>
-              <span className="tabular-nums text-muted-foreground">{bootstrap.logs.length} lines</span>
+              <span className="font-medium text-foreground/80">实时日志</span>
+              <span className="tabular-nums text-muted-foreground">{bootstrap.logs.length} 行</span>
             </div>
             <div className="flex-1 overflow-y-auto px-3 py-2 font-mono text-[10.5px] leading-relaxed">
               {bootstrap.logs.map((entry, idx) => (
@@ -152,22 +146,40 @@ export default function ProgressScreen({ bootstrap }: ProgressProps) {
       <div className="flex shrink-0 items-center justify-between border-t border-(--stroke-nous) px-6 py-3">
         <button
           className="inline-flex cursor-pointer items-center gap-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
-          onClick={() => setShowLogs((v) => !v)}
+          onClick={() => setShowLogs(v => !v)}
           type="button"
         >
           <FileText size={14} />
-          {showLogs ? 'Hide details' : 'Show details'}
+          {showLogs ? '收起详情' : '查看详情'}
           <ChevronRight className={clsx('transition-transform', showLogs && 'rotate-90')} size={12} />
         </button>
 
         {bootstrap.status === 'running' && (
           <Button onClick={() => void cancelInstall()} size="sm" variant="outline">
-            Cancel
+            取消
           </Button>
         )}
       </div>
     </div>
   )
+}
+
+const STAGE_TITLES: Record<string, string> = {
+  handoff: '准备更新',
+  update: '更新智能内核',
+  rebuild: '保留萌学伴桌面皮肤',
+  install: '重新打开萌学伴',
+  'system-packages': '检查系统组件',
+  uv: '准备 Python 工具',
+  python: '创建运行环境',
+  repo: '下载智能内核',
+  dependencies: '安装运行依赖',
+  node: '准备桌面运行环境',
+  desktop: '安装萌学伴桌面端'
+}
+
+function stageTitle(name: string, fallback: string): string {
+  return STAGE_TITLES[name] ?? fallback
 }
 
 // Terminal-state markers, neutral by design: a muted check for done/skipped
@@ -190,9 +202,13 @@ function StateIcon({ state }: { state: StageState | null }) {
 }
 
 function formatDuration(ms: number): string {
-  if (ms < 1000) {return `${ms}ms`}
+  if (ms < 1000) {
+    return `${ms}ms`
+  }
 
-  if (ms < 60000) {return `${(ms / 1000).toFixed(1)}s`}
+  if (ms < 60000) {
+    return `${(ms / 1000).toFixed(1)}s`
+  }
   const m = Math.floor(ms / 60000)
   const s = Math.round((ms % 60000) / 1000)
 
@@ -203,7 +219,9 @@ function formatDuration(ms: number): string {
 function formatElapsed(ms: number): string {
   const s = Math.max(0, Math.floor(ms / 1000))
 
-  if (s < 60) {return `${s}s`}
+  if (s < 60) {
+    return `${s}s`
+  }
   const m = Math.floor(s / 60)
 
   return `${m}:${String(s - m * 60).padStart(2, '0')}`

@@ -21,6 +21,130 @@
   }
 }
 
+/* MengXueBan launch choreography: the mascot grows into place while two soft
+   learning-path rings orbit behind it. The global reduced-motion rule above
+   collapses this to a calm static brand lockup when requested by the OS. */
+.mxb-launch-visual {
+  position: relative;
+  display: grid;
+  width: 8.5rem;
+  height: 7.25rem;
+  margin: 0 auto;
+  place-items: center;
+  isolation: isolate;
+}
+
+.mxb-launch-mark {
+  z-index: 2;
+  animation:
+    mxb-sprout-in 900ms cubic-bezier(0.16, 1, 0.3, 1) both,
+    mxb-breathe 2.8s ease-in-out 900ms infinite;
+  box-shadow: 0 0.8rem 2.5rem color-mix(in srgb, var(--dt-primary) 24%, transparent);
+}
+
+.mxb-launch-orbit {
+  position: absolute;
+  z-index: 0;
+  width: 7rem;
+  height: 7rem;
+  border: 1px solid color-mix(in srgb, var(--dt-primary) 30%, transparent);
+  border-radius: 38% 62% 55% 45%;
+}
+
+.mxb-launch-orbit-one {
+  animation: mxb-orbit 5.5s linear infinite;
+}
+
+.mxb-launch-orbit-two {
+  width: 6rem;
+  height: 6rem;
+  border-color: color-mix(in srgb, var(--theme-warm) 42%, transparent);
+  animation: mxb-orbit-reverse 4.25s linear infinite;
+}
+
+.mxb-launch-star {
+  position: absolute;
+  z-index: 3;
+  top: 0.35rem;
+  right: 0.85rem;
+  color: var(--theme-warm);
+  font-size: 1.05rem;
+  filter: drop-shadow(0 0.2rem 0.35rem color-mix(in srgb, var(--theme-warm) 45%, transparent));
+  animation: mxb-star-pop 1.7s ease-in-out 550ms infinite;
+}
+
+.mxb-launch-ground {
+  position: absolute;
+  z-index: 1;
+  bottom: 0.15rem;
+  width: 4.6rem;
+  height: 0.45rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--dt-primary) 18%, transparent);
+  filter: blur(0.2rem);
+  animation: mxb-ground-in 900ms ease-out both;
+}
+
+@keyframes mxb-sprout-in {
+  0% {
+    transform: translateY(1.8rem) scale(0.38) rotate(-7deg);
+    opacity: 0;
+  }
+  58% {
+    transform: translateY(-0.28rem) scale(1.06) rotate(2deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(0) scale(1) rotate(0);
+    opacity: 1;
+  }
+}
+
+@keyframes mxb-breathe {
+  0%,
+  100% {
+    transform: translateY(0) scale(1);
+  }
+  50% {
+    transform: translateY(-0.22rem) scale(1.025);
+  }
+}
+
+@keyframes mxb-orbit {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes mxb-orbit-reverse {
+  from {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes mxb-star-pop {
+  0%,
+  100% {
+    transform: scale(0.75) rotate(-10deg);
+    opacity: 0.55;
+  }
+  50% {
+    transform: scale(1.18) rotate(8deg);
+    opacity: 1;
+  }
+}
+
+@keyframes mxb-ground-in {
+  from {
+    transform: scaleX(0.25);
+    opacity: 0;
+  }
+  to {
+    transform: scaleX(1);
+    opacity: 1;
+  }
+}
+
 /* Sidebar sections: tall viewports give each its own scroller; compact ones
    (this variant) flatten everything into one shared scroll. See ChatSidebar. */
 @custom-variant compact (@media (max-height: 768px));
@@ -1638,13 +1762,13 @@ text-* variant utilities. */ .btn-arc {
    an open diff is excluded — it keeps the full gap, same as in-flow. */
 [data-slot='aui_turn-pair']
   > [data-slot='aui_assistant-message-root']:has(
-      > [data-slot='aui_assistant-message-content']
-        > :is([data-slot='tool-block'], [data-slot='aui_thinking-disclosure'], [data-slot='aui_stream-stall']):last-child
-    ):not(:has([data-file-edit]))
+    > [data-slot='aui_assistant-message-content']
+      > :is([data-slot='tool-block'], [data-slot='aui_thinking-disclosure'], [data-slot='aui_stream-stall']):last-child
+  ):not(:has([data-file-edit]))
   + [data-slot='aui_assistant-message-root']:has(
-      > [data-slot='aui_assistant-message-content']
-        > :is([data-slot='tool-block'], [data-slot='aui_thinking-disclosure'], [data-slot='aui_stream-stall']):first-child
-    ):not(:has([data-file-edit])) {
+    > [data-slot='aui_assistant-message-content']
+      > :is([data-slot='tool-block'], [data-slot='aui_thinking-disclosure'], [data-slot='aui_stream-stall']):first-child
+  ):not(:has([data-file-edit])) {
   margin-top: calc(var(--scaffold-block-gap) - var(--conversation-turn-gap));
 }
 

@@ -39,6 +39,8 @@ export interface DesktopThemeColors {
   midgroundForeground?: string
   /** Composer outline / focus color. Falls back to `midground`. */
   composerRing?: string
+  /** Secondary brand spark used for small highlights and warm status cues. */
+  warm?: string
   destructive: string
   destructiveForeground: string
   sidebarBackground?: string

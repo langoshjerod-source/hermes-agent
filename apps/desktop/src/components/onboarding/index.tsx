@@ -2,6 +2,7 @@ import { useStore } from '@nanostores/react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 
 import { Button } from '@/components/ui/button'
+import { BrandMark } from '@/components/brand-mark'
 import { Codicon } from '@/components/ui/codicon'
 import { Input } from '@/components/ui/input'
 import { Progress } from '@/components/ui/progress'
@@ -369,7 +370,14 @@ function Preparing({ boot }: { boot: DesktopBootState }) {
   const installing = boot.phase.startsWith('runtime.')
 
   return (
-    <div className="grid gap-3" role="status">
+    <div className="grid gap-4 py-2" role="status">
+      <div aria-hidden="true" className="mxb-launch-visual">
+        <span className="mxb-launch-orbit mxb-launch-orbit-one" />
+        <span className="mxb-launch-orbit mxb-launch-orbit-two" />
+        <span className="mxb-launch-star">★</span>
+        <BrandMark className="mxb-launch-mark size-20 rounded-[1.35rem] p-1.5" />
+        <span className="mxb-launch-ground" />
+      </div>
       <p className="text-sm text-muted-foreground">
         {installing ? t.onboarding.preparingInstall : t.onboarding.starting}
       </p>

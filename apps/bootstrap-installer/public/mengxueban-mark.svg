@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="800" height="800" viewBox="0 0 800 800" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="萌学伴 mascot icon">
+  <defs>
+    <linearGradient id="g_main" x1="140" y1="130" x2="650" y2="660" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#8BD93F"/>
+      <stop offset="0.52" stop-color="#20B967"/>
+      <stop offset="1" stop-color="#00865A"/>
+    </linearGradient>
+    <linearGradient id="g_light" x1="210" y1="560" x2="520" y2="690" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#9BE351"/>
+      <stop offset="1" stop-color="#28B75E"/>
+    </linearGradient>
+  </defs>
+  <g transform="translate(90,80) scale(1.25)">
+    <path d="M260 20 C380 20 470 110 470 232 C470 350 380 450 256 450 C128 450 30 350 30 225 C30 96 130 20 260 20Z" fill="url(#g_main)"/>
+    <path d="M350 252 C392 220 428 199 454 218 C487 243 477 328 422 379 C375 423 322 443 258 446 C314 399 345 337 350 252Z" fill="#009B5A"/>
+    <path d="M242 96 C329 94 392 151 393 225 C394 301 329 354 242 354 C155 354 91 302 91 226 C91 151 154 98 242 96Z" fill="#FFFFFF"/>
+    <path d="M184 298 C210 318 226 352 242 392 C258 352 274 318 301 298 C281 313 260 321 242 321 C222 321 203 313 184 298Z" fill="#FFFFFF"/>
+    <ellipse cx="185" cy="220" rx="19" ry="34" fill="#004E37"/>
+    <ellipse cx="295" cy="220" rx="19" ry="34" fill="#004E37"/>
+    <ellipse cx="148" cy="281" rx="27" ry="18" fill="#A7DE72"/>
+    <ellipse cx="331" cy="281" rx="27" ry="18" fill="#A7DE72"/>
+    <path d="M216 286 C229 306 256 306 270 286" fill="none" stroke="#004E37" stroke-width="12" stroke-linecap="round"/>
+    <path d="M267 31 C283 64 284 91 278 121" fill="none" stroke="#168B55" stroke-width="17" stroke-linecap="round"/>
+    <ellipse cx="230" cy="29" rx="64" ry="37" transform="rotate(34 230 29)" fill="#72CF3F"/>
+    <ellipse cx="319" cy="36" rx="61" ry="33" transform="rotate(-23 319 36)" fill="#20B967"/>
+    <path d="M120 338 C169 329 209 344 241 386 C202 377 164 379 125 399 C119 376 117 357 120 338Z" fill="#FFFFFF"/>
+    <path d="M364 338 C315 329 275 344 243 386 C282 377 320 379 359 399 C365 376 367 357 364 338Z" fill="#FFFFFF"/>
+    <path d="M92 379 C148 354 201 362 243 414 C170 405 130 413 86 445 C81 422 82 399 92 379Z" fill="url(#g_light)"/>
+    <path d="M394 379 C338 354 285 362 243 414 C316 405 356 413 400 445 C405 422 404 399 394 379Z" fill="#42C56B"/>
+    <path d="M243 382 L243 430" stroke="#A7DE45" stroke-width="12" stroke-linecap="round"/>
+    <path d="M455 125 L471 158 L507 165 L480 190 L486 226 L455 208 L423 226 L429 190 L402 165 L439 158Z" fill="#FFC20E"/>
+  </g>
+</svg>

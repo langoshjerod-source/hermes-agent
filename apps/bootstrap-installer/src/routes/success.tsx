@@ -1,14 +1,12 @@
 import { AlertCircle } from 'lucide-react'
 import { useState } from 'react'
-import { type CSSProperties } from 'react'
 
+import { BrandMark } from '../components/brand-mark'
 import { HackeryButton } from '../components/hackery-button'
 import { launchHermesDesktop } from '../store'
 
 /*
- * Success screen. HERMES AGENT wordmark stays as the visual anchor
- * (same Collapse Bold treatment as Welcome + the desktop chat intro),
- * with a status line below.
+ * Success screen keeps the official mascot as the visual anchor.
  *
  * Launching the desktop can fail (e.g. Stage-Desktop was skipped and
  * Hermes.exe doesn't exist). We catch the Tauri error and surface it
@@ -37,31 +35,17 @@ export default function Success() {
   return (
     <div className="hermes-fade-in flex h-full flex-col items-center justify-center gap-8 px-12 py-10">
       <div className="w-full max-w-2xl min-w-0 text-center">
-        <p
-          className="fit-text mx-auto mb-4 w-full font-['Collapse'] font-bold uppercase leading-[0.9] tracking-[0.08em] text-midground mix-blend-plus-lighter dark:text-foreground/90"
-          style={
-            {
-              '--fit-text-line-height': '0.9',
-              '--fit-text-max': '5rem',
-              '--fit-text-min': '2.25rem'
-            } as CSSProperties
-          }
-        >
-          <span>
-            <span>Hermes is ready</span>
-          </span>
-          <span aria-hidden="true">Hermes is ready</span>
-        </p>
+        <BrandMark className="mx-auto mb-5 size-20 rounded-[1.4rem] p-1.5" />
+        <h1 className="m-0 text-4xl font-bold tracking-tight text-primary">萌学伴准备好了</h1>
 
         <p className="m-0 text-center text-base leading-normal tracking-tight text-muted-foreground">
-          You can launch from here, or any time from your terminal with{' '}
-          <code className="font-mono text-sm text-foreground/80">hermes desktop</code>.
+          点击下方按钮即可进入萌学伴。
         </p>
       </div>
 
       <HackeryButton
         disabled={launching}
-        label={launching ? 'Launching' : 'Launch'}
+        label={launching ? '正在启动' : '进入萌学伴'}
         loading={launching}
         onClick={() => void handleLaunch()}
       />
@@ -70,7 +54,7 @@ export default function Success() {
         <div className="flex max-w-2xl items-start gap-2 text-sm" role="alert">
           <AlertCircle className="mt-0.5 shrink-0 text-destructive" size={16} />
           <div className="min-w-0">
-            <div className="font-medium text-destructive">Couldn&rsquo;t launch the desktop app</div>
+            <div className="font-medium text-destructive">萌学伴启动失败</div>
             <div className="mt-0.5 text-muted-foreground">{error}</div>
           </div>
         </div>

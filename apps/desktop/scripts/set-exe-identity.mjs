@@ -35,16 +35,60 @@
 // (after-pack.mjs) swallows the rejection so a stamp failure never fails an
 // otherwise-good build (worst case: stock icon, not a broken app).
 
-import { resolve, join } from 'node:path'
 import { existsSync } from 'node:fs'
+import { chmod, readFile, rename, stat, unlink, writeFile } from 'node:fs/promises'
+import { resolve, join } from 'node:path'
 
+import { NtExecutable, NtExecutableResource } from 'pe-library'
 import { rcedit } from 'rcedit'
+import { Data, Resource } from 'resedit'
 
 import { isMain } from './utils.mjs'
 
 // Stamp the Hermes icon + identity onto `exe`. Resolves on success, throws on
 // failure. `desktopRoot` defaults to this script's package root so the icon and
 // the rcedit dependency resolve regardless of cwd.
+async function stampExeIdentityPureJs(exe, icon) {
+  const source = await readFile(exe)
+  const parsed = NtExecutable.from(source, { ignoreCert: true })
+  const resources = NtExecutableResource.from(parsed)
+  const iconFile = Data.IconFile.from(await readFile(icon))
+  const group = resources.entries.find(entry => entry.type === 14)
+
+  Resource.IconGroupEntry.replaceIconsForResource(
+    resources.entries,
+    typeof group?.id === 'number' ? group.id : 1,
+    typeof group?.lang === 'number' ? group.lang : 1033,
+    iconFile.icons.map(item => item.data)
+  )
+
+  for (const versionInfo of Resource.VersionInfo.fromEntries(resources.entries)) {
+    versionInfo.setStringValues(
+      { lang: 1033, codepage: 1200 },
+      {
+        ProductName: '萌学伴',
+        FileDescription: '萌学伴 Desktop',
+        CompanyName: 'MengXueBan',
+        LegalCopyright: 'MengXueBan Desktop · Powered by Hermes Agent'
+      }
+    )
+    versionInfo.outputToResourceEntries(resources.entries)
+  }
+
+  resources.outputResource(parsed)
+  const output = `${exe}.mxb-stamped`
+  const mode = (await stat(exe)).mode
+
+  try {
+    await writeFile(output, Buffer.from(parsed.generate()))
+    await chmod(output, mode)
+    await rename(output, exe)
+  } catch (error) {
+    await unlink(output).catch(() => undefined)
+    throw error
+  }
+}
+
 async function stampExeIdentity(exe, desktopRoot = resolve(import.meta.dirname, '..')) {
   if (!exe || !existsSync(exe)) {
     throw new Error(`target exe not found: ${exe}`)
@@ -59,17 +103,28 @@ async function stampExeIdentity(exe, desktopRoot = resolve(import.meta.dirname, 
   console.log(`[set-exe-identity] stamping ${exe}`)
   console.log(`[set-exe-identity] icon: ${icon}`)
 
-  await rcedit(exe, {
-    icon,
-    'version-string': {
-      ProductName: 'Hermes',
-      FileDescription: 'Hermes',
-      CompanyName: 'Nous Research',
-      LegalCopyright: 'Copyright (c) 2026 Nous Research'
+  if (process.platform === 'win32') {
+    try {
+      await rcedit(exe, {
+        icon,
+        'version-string': {
+          ProductName: '萌学伴',
+          FileDescription: '萌学伴 Desktop',
+          CompanyName: 'MengXueBan',
+          LegalCopyright: 'MengXueBan Desktop · Powered by Hermes Agent'
+        }
+      })
+    } catch (error) {
+      console.warn(`[set-exe-identity] rcedit failed (${error.message}); using the portable PE editor`)
+      await stampExeIdentityPureJs(exe, icon)
     }
-  })
+  } else {
+    // rcedit shells out through Wine on macOS/Linux. The pure-JS path keeps
+    // cross-built Windows packages branded without requiring Wine.
+    await stampExeIdentityPureJs(exe, icon)
+  }
 
-  console.log('[set-exe-identity] done — Hermes icon + identity stamped')
+  console.log('[set-exe-identity] done — MengXueBan icon + identity stamped')
 }
 
 export { stampExeIdentity }

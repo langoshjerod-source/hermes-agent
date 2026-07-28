@@ -1,10 +1,10 @@
 {
   "name": "hermes",
-  "productName": "Hermes",
+  "productName": "萌学伴",
   "private": true,
   "version": "0.17.0",
-  "description": "Native desktop shell for Hermes Agent.",
-  "author": "Nous Research",
+  "description": "萌学伴桌面端，由 Hermes Agent 驱动的智能教研工作台。",
+  "author": "MengXueBan",
   "type": "module",
   "main": "dist/electron-main.mjs",
   "engines": {
@@ -12,9 +12,9 @@
   },
   "scripts": {
     "clean": "npm run clean:e2e && npm run clean:renderer && npm run clean:electron",
-    "clean:e2e":"tsc --build tsconfig.e2e.json --clean",
-    "clean:renderer":"tsc --build tsconfig.json --clean ",
-    "clean:electron":"tsc --build tsconfig.electron.json --clean",
+    "clean:e2e": "tsc --build tsconfig.e2e.json --clean",
+    "clean:renderer": "tsc --build tsconfig.json --clean ",
+    "clean:electron": "tsc --build tsconfig.electron.json --clean",
     "dev": "concurrently -k \"npm:dev:renderer\" \"npm:dev:electron\"",
     "dev:fake-boot": "cross-env HERMES_DESKTOP_BOOT_FAKE=1 HERMES_DESKTOP_BOOT_FAKE_STEP_MS=650 npm run dev",
     "dev:mock": "node scripts/dev-mock.mjs",
@@ -162,6 +162,7 @@
     "jsdom": "^29.1.1",
     "prettier": "^3.8.3",
     "rcedit": "^5.0.2",
+    "resedit": "^1.7.2",
     "tsx": "^4.22.4",
     "typescript": "^6.0.3",
     "vite": "^8.0.10",
@@ -170,18 +171,18 @@
   },
   "build": {
     "electronVersion": "40.10.2",
-    "appId": "com.nousresearch.hermes",
-    "productName": "Hermes",
-    "executableName": "Hermes",
+    "appId": "cn.mengxueban.desktop",
+    "productName": "萌学伴",
+    "executableName": "MengXueBan",
     "protocols": [
       {
-        "name": "Hermes Protocol",
+        "name": "MengXueBan Protocol",
         "schemes": [
-          "hermes"
+          "mengxueban"
         ]
       }
     ],
-    "artifactName": "Hermes-${version}-${os}-${arch}.${ext}",
+    "artifactName": "MengXueBan-${version}-${os}-${arch}.${ext}",
     "icon": "assets/icon",
     "directories": {
       "output": "release"
@@ -217,12 +218,12 @@
       "entitlements": "electron/entitlements.mac.plist",
       "entitlementsInherit": "electron/entitlements.mac.inherit.plist",
       "extendInfo": {
-        "CFBundleDisplayName": "Hermes",
-        "CFBundleExecutable": "Hermes",
-        "CFBundleName": "Hermes",
-        "NSAudioCaptureUsageDescription": "Hermes uses audio capture for voice conversations.",
-        "NSCameraUsageDescription": "Hermes uses the camera when a plugin or feature you enable requests it.",
-        "NSMicrophoneUsageDescription": "Hermes uses the microphone for voice input and voice conversations."
+        "CFBundleDisplayName": "萌学伴",
+        "CFBundleExecutable": "MengXueBan",
+        "CFBundleName": "萌学伴",
+        "NSAudioCaptureUsageDescription": "萌学伴使用音频录制支持语音对话。",
+        "NSCameraUsageDescription": "萌学伴在您启用的插件或功能请求时使用摄像头。",
+        "NSMicrophoneUsageDescription": "萌学伴使用麦克风支持语音输入与对话。"
       },
       "gatekeeperAssess": false,
       "hardenedRuntime": true,
@@ -232,8 +233,8 @@
       ]
     },
     "dmg": {
-      "title": "Install Hermes",
-      "backgroundColor": "#f5f5f7",
+      "title": "安装萌学伴",
+      "backgroundColor": "#f6f6f2",
       "iconSize": 96,
       "window": {
         "width": 560,
@@ -254,7 +255,7 @@
       ]
     },
     "win": {
-      "legalTrademarks": "Hermes",
+      "legalTrademarks": "MengXueBan",
       "target": [
         "nsis",
         "msi"
@@ -263,8 +264,8 @@
     },
     "linux": {
       "category": "Development",
-      "maintainer": "Nous Research <support@nousresearch.com>",
-      "synopsis": "Native desktop shell for Hermes Agent.",
+      "maintainer": "MengXueBan",
+      "synopsis": "MengXueBan desktop workspace powered by Hermes Agent.",
       "target": [
         "AppImage",
         "deb",
@@ -275,8 +276,8 @@
       "oneClick": false,
       "allowToChangeInstallationDirectory": true,
       "perMachine": false,
-      "shortcutName": "Hermes",
-      "uninstallDisplayName": "Hermes",
+      "shortcutName": "萌学伴",
+      "uninstallDisplayName": "萌学伴",
       "warningsAsErrors": false
     }
   }

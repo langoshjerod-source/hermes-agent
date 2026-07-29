@@ -14,7 +14,7 @@ const SOURCE = 'product:mengxueban-education'
 registry.registerMany([
   {
     area: ROUTES_AREA,
-    data: { path: '/home' },
+    data: { defaultLanding: true, path: '/home' },
     id: 'education:home-page',
     render: () => <EducationHome />,
     source: SOURCE,

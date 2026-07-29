@@ -4,6 +4,7 @@ import { registry } from '@/contrib/registry'
 
 import {
   appViewForPath,
+  contributedDefaultLandingRoute,
   contributedRoutes,
   ROUTES_AREA,
   routeSessionId,
@@ -26,7 +27,7 @@ describe('MengXueBan education contribution contract', () => {
     disposeContribution = registry.registerMany([
       {
         area: ROUTES_AREA,
-        data: { path: EDUCATION_HOME_ROUTE },
+        data: { defaultLanding: true, path: EDUCATION_HOME_ROUTE },
         id: 'education:home-page',
         render: () => null,
         source: EDUCATION_SOURCE,
@@ -46,11 +47,13 @@ describe('MengXueBan education contribution contract', () => {
 
     expect(appViewForPath(EDUCATION_HOME_ROUTE)).toBe('extension')
     expect(routeSessionId(EDUCATION_HOME_ROUTE)).toBeNull()
+    expect(contributedDefaultLandingRoute()).toBe(EDUCATION_HOME_ROUTE)
 
     expect(contributedRoutes()).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
           key: `${EDUCATION_SOURCE}:education:home-page`,
+          defaultLanding: true,
           path: EDUCATION_HOME_ROUTE,
           title: '首页'
         })

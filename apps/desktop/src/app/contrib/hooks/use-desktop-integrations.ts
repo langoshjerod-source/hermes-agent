@@ -18,7 +18,13 @@ import { openUpdatesWindow, startUpdatePoller, stopUpdatePoller } from '@/store/
 import { isSecondaryWindow } from '@/store/windows'
 
 import { requestComposerFocus, requestComposerInsert } from '../../chat/composer/focus'
-import { appViewForPath, isOverlayView, NEW_CHAT_ROUTE, sessionRoute } from '../../routes'
+import {
+  appViewForPath,
+  contributedDefaultLandingRoute,
+  isOverlayView,
+  NEW_CHAT_ROUTE,
+  sessionRoute
+} from '../../routes'
 
 interface DesktopIntegrationsParams {
   chatOpen: boolean
@@ -87,9 +93,12 @@ export function useDesktopIntegrations({
 
   const restoredRef = useRef(false)
 
-  // Restore once on cold start — only when the renderer booted at the default
-  // route (a hidden-then-shown window keeps its own route). Prefer the full
-  // remembered route (covers pages); fall back to the last session id.
+  // Resolve the cold-start route once, and only when the renderer booted at
+  // `/` (a hidden-then-shown window or an explicit deep link keeps its route).
+  // A product-contributed landing page wins; without one, upstream Hermes
+  // keeps its remembered-route/session behavior. This deliberately separates
+  // "open the product" from the user-invoked "new chat" command, which also
+  // navigates to `/` after this one-shot effect has completed.
   // eslint-disable-next-line no-restricted-syntax -- legitimate non-atom ref write (see eslint rule comment)
   useEffect(() => {
     if (restoredRef.current || locationPathname !== NEW_CHAT_ROUTE) {
@@ -100,6 +109,14 @@ export function useDesktopIntegrations({
 
     restoredRef.current = true
     const activeProfile = $activeGatewayProfile.get()
+    const landingRoute = contributedDefaultLandingRoute()
+
+    if (landingRoute) {
+      navigate(landingRoute, { replace: true })
+
+      return
+    }
+
     const route = getRememberedRoute(activeProfile)
 
     if (route && route !== NEW_CHAT_ROUTE && !isOverlayView(appViewForPath(route))) {

@@ -83,20 +83,39 @@ export const ROUTES_AREA = 'routes'
 
 /** Payload of a `routes` contribution's `data`. */
 export interface RouteContribution {
+  /** Make this page the product landing page when the app cold-starts at `/`. */
+  defaultLanding?: boolean
   /** Absolute path, e.g. `/kanban`. One segment; no params. */
   path: string
 }
 
-export function contributedRoutes(): Array<{ key: string; path: string; title?: string; render: () => ReactNode }> {
+export function contributedRoutes(): Array<{
+  defaultLanding: boolean
+  key: string
+  path: string
+  title?: string
+  render: () => ReactNode
+}> {
   return registry
     .getArea(ROUTES_AREA)
-    .map(c => ({
-      key: `${c.source ?? 'core'}:${c.id}`,
-      path: (c.data as RouteContribution | undefined)?.path ?? '',
-      title: c.title,
-      render: c.render!
-    }))
+    .map(c => {
+      const data = c.data as RouteContribution | undefined
+
+      return {
+        defaultLanding: data?.defaultLanding === true,
+        key: `${c.source ?? 'core'}:${c.id}`,
+        path: data?.path ?? '',
+        title: c.title,
+        render: c.render!
+      }
+    })
     .filter(route => Boolean(route.path.startsWith('/') && route.render) && !RESERVED_PATHS.has(route.path))
+}
+
+/** Product distributions can opt a contributed workspace page into being the
+ *  cold-start landing page without changing Hermes' `/` new-chat route. */
+export function contributedDefaultLandingRoute(): null | string {
+  return contributedRoutes().find(route => route.defaultLanding)?.path ?? null
 }
 
 function isContributedPath(pathname: string): boolean {

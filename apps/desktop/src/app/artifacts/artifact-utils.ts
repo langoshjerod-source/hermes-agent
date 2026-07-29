@@ -17,12 +17,23 @@ export interface ArtifactRecord {
   timestamp: number
 }
 
+export interface ArtifactCandidate {
+  href: string
+  kind: ArtifactKind
+  label: string
+  timestamp: number
+  value: string
+}
+
 const MARKDOWN_IMAGE_RE = /!\[([^\]]*)\]\(([^)\s]+)\)/g
 const MARKDOWN_LINK_RE = /\[([^\]]+)\]\(([^)\s]+)\)/g
 const URL_RE = /https?:\/\/[^\s<>"')]+/g
-const PATH_RE = /(^|[\s("'`])((?:\/|~\/|\.\.?\/)[^\s"'`<>]+(?:\.[a-z0-9]{1,8})?)/gi
+const PATH_RE = /(^|[\s("'`:=：])((?:\/(?!\/)|~\/|\.\.?\/)[^\s"'`<>]+(?:\.[a-z0-9]{1,8})?)/gi
 const IMAGE_EXT_RE = /\.(?:png|jpe?g|gif|webp|svg|bmp)(?:\?.*)?$/i
-const FILE_EXT_RE = /\.(?:png|jpe?g|gif|webp|svg|bmp|pdf|txt|json|md|csv|zip|tar|gz|mp3|wav|mp4|mov)(?:\?.*)?$/i
+
+const FILE_EXT_RE =
+  /\.(?:png|jpe?g|gif|webp|svg|bmp|pdf|txt|json|md|csv|xlsx?|xlsm|ods|docx?|odt|pptx?|odp|zip|tar|gz|mp3|wav|mp4|mov)(?:\?.*)?$/i
+
 const KEY_HINT_RE = /(path|file|url|image|artifact|output|download|result|target)/i
 
 function artifactSessionTitle(session: SessionInfo): string {
@@ -243,9 +254,8 @@ function collectArtifactsFromMessage(message: SessionMessage, pushValue: (value:
   }
 }
 
-export function collectArtifactsForSession(session: SessionInfo, messages: SessionMessage[]): ArtifactRecord[] {
-  const found = new Map<string, ArtifactRecord>()
-  const title = artifactSessionTitle(session)
+export function collectArtifactCandidates(messages: SessionMessage[]): ArtifactCandidate[] {
+  const found = new Map<string, ArtifactCandidate>()
 
   for (const message of messages) {
     if (message.role !== 'assistant' && message.role !== 'tool') {
@@ -259,24 +269,31 @@ export function collectArtifactsForSession(session: SessionInfo, messages: Sessi
         return
       }
 
-      const key = `${session.id}:${value}`
-
-      if (found.has(key)) {
+      if (found.has(value)) {
         return
       }
 
-      found.set(key, {
-        id: key,
+      found.set(value, {
         kind: artifactKind(value),
         value,
         href: artifactHref(value),
         label: artifactLabel(value),
-        sessionId: session.id,
-        sessionTitle: title,
-        timestamp: message.timestamp || session.last_active || session.started_at || Date.now()
+        timestamp: message.timestamp || 0
       })
     })
   }
 
   return Array.from(found.values())
+}
+
+export function collectArtifactsForSession(session: SessionInfo, messages: SessionMessage[]): ArtifactRecord[] {
+  const title = artifactSessionTitle(session)
+
+  return collectArtifactCandidates(messages).map(candidate => ({
+    ...candidate,
+    id: `${session.id}:${candidate.value}`,
+    sessionId: session.id,
+    sessionTitle: title,
+    timestamp: candidate.timestamp || session.last_active || session.started_at || Date.now()
+  }))
 }

@@ -3,6 +3,10 @@ import './styles.css'
 import './store/active-work'
 // Side-effect: applies the persisted window translucency on load.
 import './store/translucency'
+// Product-edge routes and navigation. The education workbench composes the
+// existing Hermes shell through contribution seams; it does not change the
+// agent runtime or the core route table.
+import './app/education/contribution'
 // Dev-only render/state churn counters. MUST precede the `react-dom` import
 // below: react-dom captures the devtools hook at module init, so bippy has to
 // install during THIS import's evaluation or every commit goes unseen

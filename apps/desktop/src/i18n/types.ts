@@ -2486,6 +2486,106 @@ export interface Translations {
     }
   }
 
+  education: {
+    nav: {
+      home: string
+      tasks: string
+      sources: string
+      templates: string
+    }
+    home: {
+      eyebrow: string
+      title: string
+      description: string
+      intentPlaceholder: string
+      intentAction: string
+      scenariosTitle: string
+      scenariosDescription: string
+      continueTitle: string
+      continueEmpty: string
+      continueEmptyDescription: string
+      sourceTitle: string
+      sourceSummary: (available: number, total: number) => string
+    }
+    scenario: {
+      courseTreeName: string
+      courseTreeDescription: string
+      knowledgeTreeName: string
+      knowledgeTreeDescription: string
+      documentName: string
+      documentDescription: string
+      start: string
+    }
+    tasks: {
+      title: string
+      description: string
+      createTitle: string
+      createDescription: string
+      needsAttention: string
+      running: string
+      completed: string
+      partial: string
+      empty: string
+      emptyDescription: string
+      purpose: string
+      purposePlaceholder: string
+      fieldPlaceholder: (field: string) => string
+      continueToConfirm: string
+      confirmTitle: string
+      confirmDescription: string
+      editInformation: string
+      confirmCreate: string
+      created: string
+      requiredHint: string
+      startExecution: string
+      startingExecution: string
+      openConversation: string
+      executionFailed: string
+      answerFailed: string
+      openArtifacts: string
+    }
+    sources: {
+      title: string
+      description: string
+      capability: string
+      capabilityCatalogue: string
+      capabilityRead: string
+      capabilityRefresh: string
+      capabilitySearch: string
+      scope: string
+      state: string
+      available: string
+      notConfigured: string
+      empty: string
+      emptyDescription: string
+    }
+    templates: {
+      title: string
+      description: string
+      safetyTitle: string
+      safetyDescription: string
+      rolesTitle: string
+      rolesDescription: string
+      scenesTitle: string
+      scenesDescription: string
+      builtin: string
+      personal: string
+      createCopy: string
+      edit: string
+      editRoleTitle: string
+      editSceneTitle: string
+      name: string
+      descriptionLabel: string
+      instruction: string
+      instructionHint: string
+      assignedRole: string
+      inputs: (count: number) => string
+      outputs: (count: number) => string
+      saved: string
+      saveFailed: string
+    }
+  }
+
   errors: {
     genericFailure: string
     boundaryTitle: string

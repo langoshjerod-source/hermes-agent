@@ -27,9 +27,10 @@
  * trust seam.
  */
 
+import { init, parse } from 'es-module-lexer'
+
 import { installPluginSdk, sdkImportMap } from '@/sdk/runtime'
 import { notifyError } from '@/store/notifications'
-import { init, parse } from 'es-module-lexer'
 
 import { createPluginContext, type HermesPlugin } from './plugin'
 import { dropPlugin, pluginActive, type PluginKind, publishPlugin } from './plugins-store'
@@ -84,7 +85,9 @@ export function runtimeImportPreludeSpecifiers(source: string): ModuleSpecifier[
 
   for (const line of source.split(/\r?\n/)) {
     const match = /^\s*import\s+(?:[^'";]*?\s+from\s+)?(['"])([^'"]+)\1\s*;?\s*$/.exec(line)
-    if (!match) break
+    if (!match) {
+      break
+    }
 
     const specifier = match[2]
     const start = offset + line.lastIndexOf(specifier)

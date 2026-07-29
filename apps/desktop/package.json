@@ -57,6 +57,8 @@
     "check:test:desktop:platforms": "npm run test:desktop:platforms",
     "check:test:ui": "npm run test:ui",
     "check:test:desktop:all": "npm run test:desktop:all",
+    "check:education": "node scripts/check-education-compat.mjs",
+    "check:education:quick": "node scripts/check-education-compat.mjs --quick",
     "check:lint": "npm run typecheck && npm run lint",
     "check": "npm run check:lint && npm run check:test:ui && npm run test:desktop:platforms && npm run test:desktop:all",
     "test:e2e": "npm run build && playwright test e2e/",

@@ -2927,6 +2927,108 @@ export const en: Translations = {
     }
   },
 
+  education: {
+    nav: {
+      home: 'Home',
+      tasks: 'Tasks',
+      sources: 'Sources',
+      templates: 'Templates'
+    },
+    home: {
+      eyebrow: 'Teaching research workspace',
+      title: 'What would you like to finish today?',
+      description: 'Start with an outcome. MengXueBan will prepare the role, sources, steps, and deliverables.',
+      intentPlaceholder: 'For example: organize the Grade 5 Shanghai Edition mathematics course tree',
+      intentAction: 'Prepare task',
+      scenariosTitle: 'Common scenarios',
+      scenariosDescription: 'A clear starting point with the required scope and expected deliverables already defined.',
+      continueTitle: 'Continue',
+      continueEmpty: 'No tasks need your attention',
+      continueEmptyDescription: 'Tasks waiting for a choice or currently running will appear here.',
+      sourceTitle: 'Source availability',
+      sourceSummary: (available, total) => `${available} of ${total} sources available`
+    },
+    scenario: {
+      courseTreeName: 'Textbook course tree',
+      courseTreeDescription: 'Organize edition and volume into a unit–lesson Excel tree.',
+      knowledgeTreeName: 'Subject knowledge tree',
+      knowledgeTreeDescription: 'Organize the subject-level knowledge structure by stage and subject.',
+      documentName: 'Document organization',
+      documentDescription: 'Turn PDF, Word, and image batches into readable structured outputs.',
+      start: 'Start'
+    },
+    tasks: {
+      title: 'Tasks',
+      description: 'Resume questions, follow progress, and open completed deliverables.',
+      createTitle: 'Prepare a task',
+      createDescription: 'The selected scenario will collect its required purpose and scope before execution.',
+      needsAttention: 'Needs your attention',
+      running: 'In progress',
+      completed: 'Completed',
+      partial: 'Partially completed',
+      empty: 'No tasks yet',
+      emptyDescription: 'Choose a scenario on Home to prepare the first task.',
+      purpose: 'What should this task accomplish?',
+      purposePlaceholder: 'Describe the audience, intended use, and expected result',
+      fieldPlaceholder: field => `Choose or enter ${field}`,
+      continueToConfirm: 'Review task',
+      confirmTitle: 'Confirm before execution',
+      confirmDescription:
+        'The task is created only after scope and outputs are confirmed. Ambiguous editions still require a choice.',
+      editInformation: 'Back to edit',
+      confirmCreate: 'Confirm and create',
+      created: 'Task created and waiting for execution connection.',
+      requiredHint: 'Required',
+      startExecution: 'Start execution',
+      startingExecution: 'Connecting to execution…',
+      openConversation: 'Open execution session',
+      executionFailed: 'Execution could not start. Check the Gateway connection and retry.',
+      answerFailed: 'The choice could not be submitted. Retry or open the execution session.',
+      openArtifacts: 'View artifacts'
+    },
+    sources: {
+      title: 'Sources',
+      description: 'See what each source can do, its supported scope, and current availability.',
+      capability: 'Capability',
+      capabilityCatalogue: 'Catalogue',
+      capabilityRead: 'Read',
+      capabilityRefresh: 'Refresh',
+      capabilitySearch: 'Search',
+      scope: 'Supported scope',
+      state: 'State',
+      available: 'Available',
+      notConfigured: 'Not configured',
+      empty: 'No sources configured',
+      emptyDescription: 'Configured textbook sources, Knowledge Base, web search, and files will appear here.'
+    },
+    templates: {
+      title: 'Roles and scenarios',
+      description: 'Use the built-in workflows or create a personal copy to adjust.',
+      safetyTitle: 'Built-in templates are always preserved',
+      safetyDescription:
+        'Create a personal copy before editing. Your changes do not affect other users or official updates.',
+      rolesTitle: 'Roles',
+      rolesDescription: 'Roles define how the assistant understands work, uses capabilities, and organizes results.',
+      scenesTitle: 'Scenarios',
+      scenesDescription: 'Scenarios define required information, the assigned role, and expected artifacts.',
+      builtin: 'Built-in',
+      personal: 'Mine',
+      createCopy: 'Create my copy',
+      edit: 'Edit',
+      editRoleTitle: 'Edit role',
+      editSceneTitle: 'Edit scenario',
+      name: 'Name',
+      descriptionLabel: 'Purpose',
+      instruction: 'Working instructions',
+      instructionHint: 'Describe how this role should decide, confirm, and produce results.',
+      assignedRole: 'Assigned role',
+      inputs: count => `${count} required inputs`,
+      outputs: count => `${count} artifacts`,
+      saved: 'Saved',
+      saveFailed: 'Could not save. Try again.'
+    }
+  },
+
   errors: {
     genericFailure: 'Something went wrong',
     boundaryTitle: 'Something broke in the interface',

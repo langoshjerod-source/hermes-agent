@@ -22,6 +22,252 @@ This doc contains two kinds of content, maintained differently:
 When a rule and the code disagree, fix whichever is wrong rather than forking a
 one-off at the call site.
 
+## MengXueBan education workspace extension
+
+This section is the product and interaction source of truth for the
+teacher-facing education workspace layered on Hermes Desktop. The detailed
+scenario catalogue, task fields, and wireframes live in
+[`EDUCATION_SCENARIOS.md`](./EDUCATION_SCENARIOS.md). The existing desktop
+contracts below remain authoritative for primitives, tokens, overlays, state,
+and navigation behavior.
+
+### Source of truth and evidence
+
+- Runtime capability comes from Hermes sessions, goals, profiles, SOUL files,
+  skills, toolsets, cron jobs, messaging delivery, and artifacts. The education
+  workspace composes these capabilities; it does not reimplement the agent.
+- Existing full-page routes and contributed routes are the extension seam for
+  Home, Tasks, Sources, and Scenarios. Chat and Artifacts remain shared core
+  surfaces.
+- The teacher-facing source catalogue includes Xueke, Knowledge Base, web
+  search, URL collection, and uploaded files. A source advertises concrete
+  capabilities such as catalogue, search, read, or scheduled refresh.
+- Private provider names and infrastructure names are implementation details.
+  Do not expose TAL Teaching Research Cloud or RAGFlow in teacher-facing Home,
+  task, source, or artifact copy. Present RAGFlow-backed capability as
+  **知识库**; administrators may inspect the concrete provider in technical
+  details.
+- Images and scanned pages are understood by the configured vision API model.
+  Text PDFs and Word documents preserve extractable text and structure before
+  model interpretation. The product must not imply that local OCR is required.
+- External pattern references inform the interaction model, but Hermes remains
+  the implementation boundary: task-oriented workbenches, typed user inputs,
+  reusable source connectors, asynchronous runs, and explicit artifacts.
+
+### Brand
+
+- Product name: **萌学伴**. Hermes may appear in technical settings and runtime
+  diagnostics, not as the primary teacher-facing product name.
+- Character: calm, capable, scholarly, and warm. Avoid childish school motifs,
+  gamified decoration, or enterprise-console density.
+- Use the existing `BrandMark`, theme tokens, type scale, Tabler/Codicon
+  vocabularies, and light/dark themes. New education pages do not introduce a
+  second visual system.
+- Teacher-facing copy uses familiar nouns: 场景、任务、资料来源、助手、产物.
+  Keep Profile, SOUL, MCP, session id, and model routing out of primary flows.
+
+### Goals and non-goals
+
+Goals:
+
+1. Let a teacher start a high-value education task within one minute without
+   learning Hermes implementation concepts.
+2. Require a clear purpose and the minimum scope needed for a reliable result
+   before execution.
+3. Make ambiguity visible as a compact confirmation choice, especially for
+   textbook edition, year, semester, source, and output scope.
+4. Keep long work resumable: the user can leave, inspect progress later, answer
+   a waiting question, and open the resulting artifact.
+5. Make reusable scenario packages and assistant templates easy to discover
+   while preserving free-form chat as the expert escape hatch.
+
+Non-goals:
+
+- A generic low-code workflow canvas for teachers.
+- A second skill/plugin system or a second artifact store.
+- Exposing operator/mxb instance topology in everyday task creation.
+- Guessing a textbook-to-knowledge mapping without a source that explicitly
+  supplies the relationship.
+- Requiring users to understand model providers, tool schemas, or prompts.
+
+### Personas and jobs to be done
+
+- **学科教师:** 整理教材、备课、读资料、形成可直接使用的教案或表格。
+- **教研员:** 跨来源汇总课程与知识结构、做专题研究、检查覆盖与差异。
+- **内容运营:** 批量整理 PDF/Word/图片资料，维护可复用的结构化产物。
+- **平台管理员:** 配置数据来源、助手模板和场景包，并观察可用状态。
+
+### Information architecture
+
+The recommended primary navigation is:
+
+1. **首页** — intent entry, recommended scenarios, continuing tasks, recent
+   artifacts, and source availability.
+2. **对话** — existing flexible Hermes conversation and project workspace.
+3. **任务** — durable business view over sessions/goals, including waiting,
+   running, completed, partial, and failed work.
+4. **数据来源** — shared source connections and capability status.
+5. **产物** — the existing Artifacts surface, enhanced with scenario and task
+   metadata when available.
+
+**场景包** and **助手模板** are secondary management destinations reachable
+from Home and Settings/Capabilities. They should not consume permanent primary
+navigation space for ordinary teachers.
+
+The current Chat route may remain `/` during migration. The education Home can
+ship as a contributed full page first, then become the default landing page
+only after navigation and resume behavior are proven. Background completion
+must never force navigation away from the current conversation.
+
+### Product model
+
+| Teacher-facing object | Hermes composition | Required behavior |
+| --- | --- | --- |
+| 助手模板 | Profile seed + SOUL + default model + enabled skills/toolsets | Selects a stable role and capability set before a new session starts. It does not mutate an active conversation's prompt. |
+| 场景包 | Assistant template + intake schema + source requirements + execution recipe + output contract | A reusable task starter, versioned independently from prior task records. |
+| 任务卡 | Scenario snapshot + user inputs + source bindings + session/goal identity + state + artifacts | Durable, resumable, and honest about waiting, partial success, and failure. |
+| 数据来源 | Connector/configuration + capabilities + scope + availability | Describes what can be searched/read/collected; it is not just a credential list. |
+| 产物 | Existing Hermes artifact + task/scenario metadata | Opens or downloads the result and links back to the originating task/chat. |
+
+### Core design principles
+
+1. **Task first.** Lead with what the teacher wants to finish, not which model
+   or assistant they want to operate.
+2. **Purpose before execution.** A scenario defines the minimum required
+   questions. Free-form intent is accepted, but execution waits until the task
+   has a clear purpose and scope.
+3. **Progressive disclosure.** Default choices cover normal cases; source,
+   assistant, model, and advanced output options expand only when needed.
+4. **Source-aware, not source-led.** The source centre explains availability,
+   but the main journey starts from a task. A source may suggest supported
+   scenarios without becoming the homepage.
+5. **Artifacts are the finish line.** Every scenario declares one or more
+   concrete outputs. A completed task without a usable output is not presented
+   as successful.
+6. **Ask, do not guess.** When multiple textbook editions or scopes match,
+   present concise source-backed choices and resume after selection.
+7. **Keep chat nearby.** Every task can open its underlying conversation for
+   follow-up, but chat is not required to understand routine task progress.
+8. **Preserve prompt caching.** Assistant selection and scenario capability
+   binding happen before session creation. Do not swap tools or rebuild the
+   system prompt mid-session.
+
+### Visual language
+
+- Continue the existing flat, whitespace-led desktop language. Use one broad
+  content surface with grouped rows; avoid a dashboard made of nested cards.
+- Scenario cards are quiet launch tiles: one icon, title, one-line outcome,
+  estimated scope, and a single primary action. Decorative metrics are absent.
+- Status relies on text plus a small tokenized pip/icon. Color is supportive,
+  never the only signal.
+- The task creation surface uses a single-column form on compact widths and a
+  two-column form/summary layout on wide screens. It is a page or route overlay,
+  not a narrow modal for long forms.
+- Source and assistant details use disclosure rows. Primary forms show friendly
+  labels; technical identifiers appear in an expandable details section.
+
+### Components
+
+- **IntentEntry** — a generous prompt field with suggested outcomes such as
+  “整理教材课程树” and “批量读 PDF 并汇总”. It classifies intent but never starts
+  a costly run without showing the task summary.
+- **ScenarioCard** — title, outcome, required inputs, expected artifacts, and
+  availability. Reuse `Button`; avoid bespoke card buttons.
+- **TaskIntake** — typed fields (select, multi-select, text, file list, source
+  picker) driven by the scenario schema.
+- **TaskSummary** — shows purpose, scope, sources, assistant, and outputs before
+  creation. Advanced runtime details are collapsed.
+- **AmbiguityConfirmCard** — two to five source-backed choices with the
+  differentiating fields visible. Never use a free-form question when known
+  choices can resolve the ambiguity.
+- **TaskRow / TaskDetail** — outcome-first title, state, current step, elapsed
+  time, waiting question, and artifact actions.
+- **SourceRow / SourceDetail** — availability, supported capabilities, supported
+  education scope, last successful check, and scenarios that can use it.
+- **AssistantTemplateRow** — friendly role, suitable tasks, enabled capability
+  summary, and the underlying profile in technical details.
+- **ArtifactTile** — existing artifact presentation plus task/scenario labels.
+
+### Accessibility
+
+- All task states and source states require text labels; do not encode state
+  using color alone.
+- Intake fields have persistent labels, descriptions for unfamiliar education
+  terms, and field-level errors tied with `aria-describedby`.
+- Scenario cards and confirmation choices are fully keyboard reachable with a
+  visible focus state. Card containers are not nested interactive controls.
+- Long-running progress uses `aria-live="polite"` only for terminal state
+  changes, not every streamed step.
+- Respect reduced motion and do not auto-scroll the user away from the field or
+  artifact they are inspecting.
+
+### Responsive behavior
+
+- **>= 1180 px:** Home uses a main column plus a narrow continuation/source
+  rail; task intake uses form + live summary.
+- **760–1179 px:** Home and task intake become one column; quick-start scenarios
+  use a two-column grid when space permits.
+- **< 760 px:** One column, sticky bottom primary action for long task forms,
+  compact task rows, and no hover-only actions.
+- Side rails collapse before content is truncated. Tables provide a readable
+  row view on narrow screens instead of horizontal overflow for core fields.
+
+### States and recovery
+
+- Task states: `draft`, `ready`, `queued`, `running`, `waiting_input`,
+  `partial`, `completed`, `failed`, `cancelled`.
+- `waiting_input` displays the exact unresolved choice and preserves all prior
+  task inputs. Answering resumes the same lineage rather than silently starting
+  a new unrelated task.
+- `partial` is a first-class result when one semester/source fails but useful
+  artifacts exist. Show what is present and what could not be obtained.
+- Source states: `available`, `degraded`, `authentication_required`,
+  `unreachable`, `unsupported_scope`, `not_configured`.
+- Retries are bounded. After exhaustion, offer “重试失败步骤”, “更换来源”, or
+  “保留当前结果”; never reduce an entire multi-source task to a generic error.
+- A source may be unavailable while cached or previously collected artifacts
+  remain usable; distinguish those states.
+
+### Content voice
+
+- Lead with outcomes: “生成教材课程树” instead of “调用课程树 Skill”.
+- Use concrete scope summaries: “小学五年级 · 数学 · 沪教版 · 上下册”.
+- Explain uncertainty in one sentence followed by choices: “学科网找到 3 个沪教
+  版，请选择教材年份/学制。”
+- Use “产物” in navigation and “Excel/Word/PDF/图片” in action labels when the
+  file type matters.
+- Avoid success copy until the artifact is present and openable.
+
+### Technical constraints
+
+- Implement teacher-facing pages at the desktop edge using existing or
+  contributed routes. Do not add scenario-specific model tools to the Hermes
+  core.
+- Business records must keep explicit mapping between task id, stable stored
+  session id, runtime session id, lineage root, profile, and artifact paths.
+- A scene package snapshots its version and resolved configuration into the
+  task. Later edits to a template do not rewrite historical task meaning.
+- Source adapters expose a small capability contract (`catalogue`, `search`,
+  `read`, `refresh`) and structured failure classes. Site-specific logic stays
+  in the source skill/adapter.
+- Profile/template changes apply to new sessions only. They must not mutate the
+  system prompt or tool list of a running conversation.
+- Teacher-facing structured exports remain Chinese-readable. Stable ids and
+  import fields may be included without displacing the readable tree.
+
+### Open questions
+
+- Which three scenario packages are pinned on the first-release Home for each
+  role?
+- Should task records be local to one Hermes gateway, or synchronized across
+  operator and mxb001–mxb004?
+- Is the teacher Home shared with administrators, or does administrator mode
+  open the current technical surfaces directly?
+- What retention and naming policy should apply to artifacts produced by
+  scheduled monitoring tasks?
+- Which source capability checks can be performed cheaply on every Home load,
+  and which require a cached health result?
+
 ## Principles
 
 1. **Flat, not boxed.** No card-in-card, no divider borders inside a panel.

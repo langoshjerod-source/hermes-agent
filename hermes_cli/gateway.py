@@ -6563,6 +6563,35 @@ def _dispatch_via_service_manager_if_s6(
         else:
             return False
     except GatewayNotRegisteredError as exc:
+        # Volumes created before dynamic s6 registration can contain a valid
+        # profile without its gateway service slot.  Start/restart is the
+        # natural migration seam: repair that missing runtime registration and
+        # bring the service up.  Never auto-create an unknown profile, and keep
+        # stop strict because silently registering something only to stop it is
+        # surprising lifecycle behavior.
+        if action in {"start", "restart"}:
+            from hermes_cli.profiles import profile_exists
+
+            if profile_exists(profile):
+                try:
+                    mgr.register_profile_gateway(profile, start_now=True)
+                except ValueError:
+                    # A concurrent request may have registered the slot after
+                    # the first lifecycle probe.  Finish the requested action
+                    # against the now-existing service.
+                    try:
+                        if action == "start":
+                            mgr.start(service_name)
+                        else:
+                            mgr.restart(service_name)
+                    except (GatewayNotRegisteredError, S6CommandError) as retry_exc:
+                        print(f"✗ {retry_exc}")
+                        sys.exit(1)
+                except (S6CommandError, RuntimeError, OSError) as register_exc:
+                    print(f"✗ Could not register gateway service for {profile!r}: {register_exc}")
+                    sys.exit(1)
+                print(f"✓ Registered and started gateway service for {profile!r}")
+                return True
         print(f"✗ {exc}")
         sys.exit(1)
     except S6CommandError as exc:

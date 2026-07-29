@@ -1088,10 +1088,12 @@ export interface Translations {
     noSessions: string
     gatewayRunning: string
     gatewayStopped: string
+    gatewayNotConfigured: string
     hermesActiveSessions: (version: string, count: number) => string
     restartGateway: string
     gatewayRestartFailed: string
     updateHermes: string
+    updateManagedExternally: string
     actionRunning: string
     actionDone: string
     actionFailed: string

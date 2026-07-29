@@ -730,6 +730,27 @@ class TestWebServerEndpoints:
 
 
 
+    def test_get_status_preserves_configured_platform_count_when_gateway_stopped(self, monkeypatch):
+        import gateway.config as gateway_config
+        import hermes_cli.web_server as web_server
+
+        class _Platform:
+            value = "telegram"
+
+        class _GatewayConfig:
+            def get_connected_platforms(self):
+                return [_Platform()]
+
+        monkeypatch.setattr(web_server, "get_running_pid_cached", lambda: None)
+        monkeypatch.setattr(web_server, "read_runtime_status", lambda: None)
+        monkeypatch.setattr(web_server, "check_config_version", lambda: (1, 1))
+        monkeypatch.setattr(gateway_config, "load_gateway_config", lambda: _GatewayConfig())
+
+        resp = self.client.get("/api/status")
+
+        assert resp.status_code == 200
+        assert resp.json()["gateway_platforms"] == {}
+        assert resp.json()["components"]["platforms"]["configured"] == 1
 
     def _schema_provider_options(self, key):
         resp = self.client.get("/api/config/schema")
@@ -3516,5 +3537,4 @@ class TestDashboardComponentHealth:
         assert self.ws.DASHBOARD_HEALTH.selftest_status == "failing"
         assert self.ws.DASHBOARD_HEALTH.selftest_http_status == 500
         assert self.ws.DASHBOARD_HEALTH.snapshot()["status"] == "degraded"
-
 

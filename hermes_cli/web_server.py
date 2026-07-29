@@ -3189,9 +3189,18 @@ async def get_status(profile: Optional[str] = None):
         platforms_ok = all(
             state in {"connected", "running", "ok"} for state in platform_states
         )
+        configured_platform_count = (
+            len(configured_gateway_platforms)
+            if configured_gateway_platforms is not None
+            else len(gateway_platforms)
+        )
         components["platforms"] = {
             "status": "ok" if platforms_ok else "degraded",
-            "configured": len(gateway_platforms),
+            # Keep configuration distinct from live runtime state.  A stopped
+            # gateway has no live platform map, but the desktop still needs to
+            # know whether it is stopped or simply has no messaging channels
+            # configured at all.
+            "configured": configured_platform_count,
             "connected": sum(
                 1 for state in platform_states if state in {"connected", "running", "ok"}
             ),

@@ -37,6 +37,7 @@ import { OverlayMain, OverlayNav, OverlaySplitLayout } from '../overlays/overlay
 import { OverlayView } from '../overlays/overlay-view'
 
 import { MaintenancePanel } from './maintenance'
+import { getSystemControls } from './system-status'
 
 export type CommandCenterSection = 'maintenance' | 'sessions' | 'system' | 'usage'
 
@@ -249,6 +250,7 @@ export function CommandCenterView({ initialSection, onClose, onDeleteSession, on
   })
 
   const sessionListHasResults = filteredSessions.length > 0
+  const systemControls = status ? getSystemControls(status) : null
 
   // Client-side substring filter over the fetched tail (matches `hermes logs --search`).
   const visibleLogs = useMemo(() => {
@@ -428,11 +430,19 @@ export function CommandCenterView({ initialSection, onClose, onDeleteSession, on
                           <span
                             className={cn(
                               'size-2 shrink-0 rounded-full',
-                              status.gateway_running ? 'bg-emerald-500' : 'bg-amber-500'
+                              systemControls?.gatewayState === 'running'
+                                ? 'bg-emerald-500'
+                                : systemControls?.gatewayState === 'not-configured'
+                                  ? 'bg-(--ui-text-tertiary)'
+                                  : 'bg-amber-500'
                             )}
                           />
                           <span className="text-[length:var(--conversation-text-font-size)] font-medium text-foreground">
-                            {status.gateway_running ? cc.gatewayRunning : cc.gatewayStopped}
+                            {systemControls?.gatewayState === 'running'
+                              ? cc.gatewayRunning
+                              : systemControls?.gatewayState === 'not-configured'
+                                ? cc.gatewayNotConfigured
+                                : cc.gatewayStopped}
                           </span>
                         </div>
                         <div className="mt-1 text-[length:var(--conversation-caption-font-size)] text-(--ui-text-tertiary)">
@@ -440,12 +450,20 @@ export function CommandCenterView({ initialSection, onClose, onDeleteSession, on
                         </div>
                       </div>
                       <div className="flex shrink-0 flex-wrap items-center gap-x-3 gap-y-1 whitespace-nowrap max-[47.5rem]:whitespace-normal">
-                        <Button onClick={() => void runSystemAction('restart')} size="xs" variant="text">
-                          {cc.restartGateway}
-                        </Button>
-                        <Button onClick={() => void runSystemAction('update')} size="xs" variant="textStrong">
-                          {cc.updateHermes}
-                        </Button>
+                        {systemControls?.canRestartGateway && (
+                          <Button onClick={() => void runSystemAction('restart')} size="xs" variant="text">
+                            {cc.restartGateway}
+                          </Button>
+                        )}
+                        {systemControls?.canUpdateHermes ? (
+                          <Button onClick={() => void runSystemAction('update')} size="xs" variant="textStrong">
+                            {cc.updateHermes}
+                          </Button>
+                        ) : (
+                          <span className="text-[length:var(--conversation-caption-font-size)] text-(--ui-text-tertiary)">
+                            {cc.updateManagedExternally}
+                          </span>
+                        )}
                       </div>
                     </div>
                     {systemAction && (

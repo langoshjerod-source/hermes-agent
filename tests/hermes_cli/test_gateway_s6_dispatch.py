@@ -18,6 +18,9 @@ class _CallRecorder:
     def __init__(self) -> None:
         self.calls: list[tuple[str, str]] = []
 
+    def register_profile_gateway(self, profile: str, *, start_now: bool = True) -> None:
+        self.calls.append(("register-start" if start_now else "register", profile))
+
     def start(self, name: str) -> None:
         self.calls.append(("start", name))
 
@@ -28,6 +31,64 @@ class _CallRecorder:
         self.calls.append(("restart", name))
 
 
+
+
+@pytest.mark.parametrize("action", ["start", "restart"])
+def test_dispatch_repairs_missing_s6_slot_for_existing_profile(
+    monkeypatch: pytest.MonkeyPatch,
+    action: str,
+) -> None:
+    """Older container volumes can predate dynamic s6 registration.
+
+    Starting or restarting an existing profile should migrate that runtime by
+    registering and starting its missing service slot, rather than leaving the
+    dashboard button permanently broken.
+    """
+    from hermes_cli import gateway as gw
+    from hermes_cli.service_manager import GatewayNotRegisteredError
+
+    class _MissingSlotRecorder(_CallRecorder):
+        def start(self, name: str) -> None:
+            raise GatewayNotRegisteredError(name.removeprefix("gateway-"))
+
+        def restart(self, name: str) -> None:
+            raise GatewayNotRegisteredError(name.removeprefix("gateway-"))
+
+    rec = _MissingSlotRecorder()
+    monkeypatch.setattr(
+        "hermes_cli.service_manager.detect_service_manager", lambda: "s6",
+    )
+    monkeypatch.setattr(
+        "hermes_cli.service_manager.get_service_manager", lambda: rec,
+    )
+    monkeypatch.setattr("hermes_cli.profiles.profile_exists", lambda profile: profile == "default")
+
+    assert gw._dispatch_via_service_manager_if_s6(action, profile="default") is True
+    assert rec.calls == [("register-start", "default")]
+
+
+def test_dispatch_does_not_register_unknown_profile(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from hermes_cli import gateway as gw
+    from hermes_cli.service_manager import GatewayNotRegisteredError
+
+    class _MissingSlotRecorder(_CallRecorder):
+        def restart(self, name: str) -> None:
+            raise GatewayNotRegisteredError(name.removeprefix("gateway-"))
+
+    rec = _MissingSlotRecorder()
+    monkeypatch.setattr(
+        "hermes_cli.service_manager.detect_service_manager", lambda: "s6",
+    )
+    monkeypatch.setattr(
+        "hermes_cli.service_manager.get_service_manager", lambda: rec,
+    )
+    monkeypatch.setattr("hermes_cli.profiles.profile_exists", lambda _profile: False)
+
+    with pytest.raises(SystemExit):
+        gw._dispatch_via_service_manager_if_s6("restart", profile="typo")
+    assert rec.calls == []
 
 
 # ---------------------------------------------------------------------------

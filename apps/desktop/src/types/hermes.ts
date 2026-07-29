@@ -1082,6 +1082,14 @@ export interface PlatformStatus {
 
 export interface StatusResponse {
   active_sessions: number
+  can_update_hermes?: boolean
+  components?: {
+    platforms?: {
+      configured: number
+      connected?: number
+      status?: string
+    }
+  }
   config_path: string
   config_version: number
   env_path: string

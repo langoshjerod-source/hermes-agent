@@ -41,6 +41,17 @@ export interface TaskArtifactReference {
   value: string
 }
 
+/** A local reference supplied by the user before execution. Files are staged
+ *  into the newly-created Hermes session before the task goal is dispatched. */
+export interface TaskInputAttachment {
+  id: string
+  kind: 'file' | 'image'
+  label: string
+  path: string
+  refText?: string
+  attachedSessionId?: string
+}
+
 export interface TaskScopeAbsence {
   code: 'not_provided_by_source' | 'unsupported_scope'
   label: string
@@ -53,6 +64,9 @@ export interface EducationTask {
   state: EducationTaskState
   sceneSnapshot: SceneExecutionSnapshot | null
   inputs: Record<string, unknown>
+  /** Optional for repository compatibility with tasks created before input
+   *  attachments were introduced. New tasks always initialize this field. */
+  inputAttachments?: TaskInputAttachment[]
   sourceBindings: string[]
   hermes: TaskHermesIdentity | null
   waitingQuestion: TaskWaitingQuestion | null
@@ -82,6 +96,7 @@ export function createDraftTask(input: Pick<EducationTask, 'id' | 'title' | 'cre
     state: 'draft',
     sceneSnapshot: null,
     inputs: {},
+    inputAttachments: [],
     sourceBindings: [],
     hermes: null,
     waitingQuestion: null,

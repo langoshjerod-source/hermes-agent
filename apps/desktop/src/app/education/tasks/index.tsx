@@ -25,6 +25,7 @@ import { missingEducationSourceSkills } from '../sources/catalog'
 import { builtinEducationRole } from '../templates/builtin-roles'
 
 import { TaskComposer } from './task-composer'
+import { readEducationTaskLaunchDraft, removeEducationTaskLaunchDraft } from './task-launch-draft'
 
 export function EducationTasks() {
   const { t } = useI18n()
@@ -39,7 +40,10 @@ export function EducationTasks() {
   const [answeringRequestId, setAnsweringRequestId] = useState<string | null>(null)
   const [answerErrorTaskId, setAnswerErrorTaskId] = useState<string | null>(null)
   const completionChecksRef = useRef(new Set<string>())
-  const requestedSceneId = params.get('create') ?? ''
+  const legacyIntent = params.get('intent')?.trim() ?? ''
+  const requestedSceneId = params.get('create') ?? (legacyIntent ? 'scene:general-research-task' : '')
+  const launchDraftId = params.get('draft')
+  const launchDraft = readEducationTaskLaunchDraft(launchDraftId)
 
   const requestedScene =
     snapshot?.scenes.find(scene => scene.id === requestedSceneId) ?? builtinEducationScene(requestedSceneId)
@@ -49,7 +53,8 @@ export function EducationTasks() {
       builtinEducationRole(requestedScene.roleTemplateId))
     : null
 
-  const intent = params.get('intent')?.trim()
+  const initialPurpose = launchDraft?.purpose ?? legacyIntent
+  const initialInputAttachments = launchDraft?.inputAttachments ?? []
 
   useEffect(() => {
     if (!snapshot) {
@@ -191,10 +196,12 @@ export function EducationTasks() {
 
   return (
     <EducationPageFrame description={copy.tasks.description} eyebrow={copy.home.eyebrow} title={copy.tasks.title}>
-      {(requestedScene || intent) && (
+      {requestedScene && (
         <section className="mt-8 border-y border-(--ui-stroke-tertiary) py-6">
           <div className="text-sm font-semibold text-(--ui-text-primary)">{copy.tasks.createTitle}</div>
-          <div className="mt-2 text-lg font-medium text-(--theme-primary)">{requestedScene?.name ?? intent}</div>
+          <div className="mt-2 text-lg font-medium text-(--theme-primary)">
+            {initialPurpose || requestedScene.name}
+          </div>
           <p className="mt-2 max-w-[65ch] text-sm leading-6 text-(--ui-text-secondary)">
             {copy.tasks.createDescription}
           </p>
@@ -203,8 +210,11 @@ export function EducationTasks() {
 
       {requestedScene && requestedRole && snapshot ? (
         <TaskComposer
+          initialInputAttachments={initialInputAttachments}
+          initialPurpose={initialPurpose}
           onCreated={task => {
             saveSnapshot(upsertTask(snapshot, task))
+            removeEducationTaskLaunchDraft(launchDraftId)
             navigateToWorkspacePage(navigate, `/tasks?task=${encodeURIComponent(task.id)}`)
           }}
           role={requestedRole}

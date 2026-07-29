@@ -4,15 +4,18 @@ import { useNavigate } from 'react-router-dom'
 
 import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/ui/empty-state'
-import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
 import { getSkills } from '@/hermes'
 import { useI18n } from '@/i18n'
 import { Brain, FileText, Globe, NotebookTabs } from '@/lib/icons'
 
 import { navigateToWorkspacePage } from '../../routes'
+import type { TaskInputAttachment } from '../domain/task'
 import { EducationPageFrame } from '../page-frame'
 import { useEducationSnapshot } from '../repository/use-education-snapshot'
 import { EDUCATION_SOURCE_CATALOG, resolveEducationSourceAvailability } from '../sources/catalog'
+import { TaskAttachmentPicker } from '../tasks/task-attachment-picker'
+import { saveEducationTaskLaunchDraft } from '../tasks/task-launch-draft'
 
 interface HomeScenario {
   description: string
@@ -51,6 +54,7 @@ export function EducationHome() {
   const navigate = useNavigate()
   const { snapshot } = useEducationSnapshot()
   const [intent, setIntent] = useState('')
+  const [inputAttachments, setInputAttachments] = useState<TaskInputAttachment[]>([])
 
   const scenarios: HomeScenario[] = [
     {
@@ -95,22 +99,37 @@ export function EducationHome() {
       return
     }
 
-    navigateToWorkspacePage(navigate, `/tasks?intent=${encodeURIComponent(value)}`)
+    const draftId = saveEducationTaskLaunchDraft({ purpose: value, inputAttachments })
+
+    navigateToWorkspacePage(
+      navigate,
+      `/tasks?create=${encodeURIComponent('scene:general-research-task')}&draft=${encodeURIComponent(draftId)}`
+    )
   }
 
   return (
     <EducationPageFrame description={copy.home.description} eyebrow={copy.home.eyebrow} title={copy.home.title}>
-      <form className="mt-8 flex max-w-3xl flex-col gap-3 sm:flex-row" onSubmit={submitIntent}>
-        <Input
-          aria-label={copy.home.intentPlaceholder}
-          className="flex-1"
-          onChange={event => setIntent(event.target.value)}
-          placeholder={copy.home.intentPlaceholder}
-          value={intent}
-        />
-        <Button disabled={!intent.trim()} size="lg" type="submit">
-          {copy.home.intentAction}
-        </Button>
+      <form className="mt-8 max-w-3xl space-y-3" onSubmit={submitIntent}>
+        <div className="rounded-lg border border-(--ui-stroke-tertiary) bg-(--ui-bg-primary) p-3 shadow-sm">
+          <Textarea
+            aria-label={copy.home.intentPlaceholder}
+            className="min-h-28 resize-y border-0 bg-transparent px-1 py-1 text-base shadow-none focus-visible:ring-0"
+            onChange={event => setIntent(event.target.value)}
+            placeholder={copy.home.intentPlaceholder}
+            value={intent}
+          />
+          <div className="mt-3 border-t border-(--ui-stroke-tertiary) pt-3">
+            <TaskAttachmentPicker attachments={inputAttachments} onChange={setInputAttachments} />
+          </div>
+          <div className="mt-3 flex flex-col gap-2 border-t border-(--ui-stroke-tertiary) pt-3 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-xs leading-5 text-(--ui-text-tertiary)">
+              目标需要说清希望完成什么；附件、格式和其他筛选项都可以稍后补充。
+            </p>
+            <Button className="shrink-0" disabled={!intent.trim()} size="lg" type="submit">
+              {copy.home.intentAction}
+            </Button>
+          </div>
+        </div>
       </form>
 
       <div className="mt-10 grid grid-cols-1 gap-10 xl:grid-cols-[minmax(0,1fr)_18rem]">

@@ -10,7 +10,8 @@ describe('built-in education scenes', () => {
       'scene:textbook-course-tree',
       'scene:subject-knowledge-tree',
       'scene:national-smartedu-resource-discovery',
-      'scene:document-organization'
+      'scene:document-organization',
+      'scene:general-research-task'
     ])
   })
 
@@ -26,6 +27,15 @@ describe('built-in education scenes', () => {
 
     expect(course.intake.map(field => field.id)).toEqual(['stage', 'subject', 'grade', 'edition', 'volumes', 'source'])
     expect(knowledge.intake.map(field => field.id)).toEqual(['stage', 'subject', 'source'])
+    expect(course.intake.filter(field => field.required).map(field => field.id)).toEqual(['stage', 'subject', 'grade'])
+  })
+
+  it('provides a free-form scene for goals launched from the home composer', () => {
+    const general = builtinEducationScene('scene:general-research-task')!
+
+    expect(general.purposeMode).toBe('required')
+    expect(general.roleTemplateId).toBe('role:teaching-research')
+    expect(general.intake).toEqual([])
   })
 
   it('offers official catalogue sources only where their capability is supported', () => {

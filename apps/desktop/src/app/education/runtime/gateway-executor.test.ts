@@ -116,6 +116,53 @@ describe('education gateway executor', () => {
     expect(running.hermes?.goalId).toBeUndefined()
   })
 
+  it('stages input attachments before dispatching the goal and includes their references in kickoff', async () => {
+    const task = {
+      ...queuedTask(),
+      inputAttachments: [
+        { id: 'file:/tmp/lesson.pdf', kind: 'file' as const, label: 'lesson.pdf', path: '/tmp/lesson.pdf' }
+      ],
+      hermes: { ...queuedTask().hermes!, connectionScope: 'local' }
+    }
+
+    const requestGateway = vi.fn(async (method: string) => {
+      if (method === 'session.create') {
+        return { session_id: 'runtime-1', stored_session_id: 'stored-1' }
+      }
+
+      if (method === 'file.attach') {
+        return { attached: true, ref_text: '@file:.hermes/desktop-attachments/lesson.pdf' }
+      }
+
+      if (method === 'slash.exec') {
+        return { type: 'send', message: 'kickoff prompt' }
+      }
+
+      return { ok: true }
+    })
+
+    const running = await startEducationTask(requestGateway as EducationGatewayRequest, task, NOW)
+
+    expect(requestGateway.mock.calls.map(([method]) => method)).toEqual([
+      'session.create',
+      'file.attach',
+      'slash.exec',
+      'prompt.submit'
+    ])
+    expect(requestGateway).toHaveBeenCalledWith(
+      'prompt.submit',
+      expect.objectContaining({
+        session_id: 'runtime-1',
+        text: expect.stringContaining('@file:.hermes/desktop-attachments/lesson.pdf')
+      }),
+      PROMPT_SUBMIT_REQUEST_TIMEOUT_MS
+    )
+    expect(running.inputAttachments?.[0]).toMatchObject({
+      attachedSessionId: 'runtime-1',
+      refText: '@file:.hermes/desktop-attachments/lesson.pdf'
+    })
+  })
+
   it('fails closed when Hermes does not acknowledge the goal kickoff', async () => {
     const requestGateway = vi.fn(async (method: string) =>
       method === 'session.create' ? { session_id: 'runtime-1' } : { type: 'exec', output: 'unexpected' }

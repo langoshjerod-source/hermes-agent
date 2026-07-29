@@ -20,13 +20,22 @@ const values = {
 
 describe('education task preparation', () => {
   it('reports required fields before task creation', () => {
-    expect(missingRequiredIntake(scene, { stage: '小学', volumes: [] })).toEqual([
-      'subject',
-      'grade',
-      'edition',
-      'volumes',
-      'source'
-    ])
+    expect(missingRequiredIntake(scene, { stage: '小学', volumes: [] })).toEqual(['subject', 'grade'])
+  })
+
+  it('does not block creation on convenience fields and defaults to both volumes', () => {
+    const task = prepareEducationTask({
+      id: 'task:optional',
+      purpose: '',
+      scene,
+      role,
+      values: { stage: '小学', subject: '数学', grade: '五年级' },
+      createdAt: NOW,
+      hermes: { connectionScope: 'local', profile: 'default' }
+    })
+
+    expect(task.inputs).toMatchObject({ volumes: ['upper', 'lower'] })
+    expect(task.sourceBindings).toEqual([])
   })
 
   it('creates a ready task with immutable scene and role snapshots', () => {
@@ -63,5 +72,25 @@ describe('education task preparation', () => {
 
     expect(task.inputs.purpose).not.toContain('二年级')
     expect(task.inputs.grade).toBe('五年级')
+  })
+
+  it('copies input attachments into the ready task', () => {
+    const inputAttachments = [
+      { id: 'file:/tmp/notes.pdf', kind: 'file' as const, label: 'notes.pdf', path: '/tmp/notes.pdf' }
+    ]
+
+    const task = prepareEducationTask({
+      id: 'task:attachment',
+      purpose: '',
+      scene,
+      role,
+      values,
+      inputAttachments,
+      createdAt: NOW,
+      hermes: { connectionScope: 'local', profile: 'default' }
+    })
+
+    expect(task.inputAttachments).toEqual(inputAttachments)
+    expect(task.inputAttachments).not.toBe(inputAttachments)
   })
 })

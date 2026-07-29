@@ -35,7 +35,8 @@ const TEXTBOOK_SOURCE_FIELD: ScenePackage['intake'][number] = {
   id: 'source',
   kind: 'source-select',
   label: '数据来源',
-  required: true,
+  description: '可选；不选择时会根据任务和当前可用能力判断，无法确定时再请你确认。',
+  required: false,
   options: [...TEXTBOOK_CATALOGUE_SOURCE_OPTIONS]
 }
 
@@ -71,13 +72,14 @@ export const BUILTIN_EDUCATION_SCENES = [
         kind: 'text',
         label: '教材版本',
         description: '例如：沪教版、沪教版（五四制）、人教版（2025）。不确定时会提供候选确认。',
-        required: true
+        required: false
       },
       {
         id: 'volumes',
         kind: 'multi-select',
         label: '册次',
-        required: true,
+        description: '可选；不选择时默认同时整理上册和下册，来源没有某一册时会写明缺口。',
+        required: false,
         options: [
           { label: '上册', value: 'upper' },
           { label: '下册', value: 'lower' }
@@ -146,7 +148,8 @@ export const BUILTIN_EDUCATION_SCENES = [
         id: 'volumes',
         kind: 'multi-select',
         label: '册次',
-        required: true,
+        description: '可选；不选择时默认同时发现上册和下册。',
+        required: false,
         options: [
           { label: '上册', value: 'upper' },
           { label: '下册', value: 'lower' }
@@ -156,7 +159,8 @@ export const BUILTIN_EDUCATION_SCENES = [
         id: 'source',
         kind: 'source-select',
         label: '数据来源',
-        required: true,
+        description: '可选；不选择时默认使用国家智慧教育平台。',
+        required: false,
         options: [...NATIONAL_SMARTEDU_SOURCE_OPTIONS]
       }
     ],
@@ -186,7 +190,8 @@ export const BUILTIN_EDUCATION_SCENES = [
         id: 'outputFormat',
         kind: 'select',
         label: '产物格式',
-        required: true,
+        description: '可选；未选择时由任务目标和资料类型决定合适的产物格式。',
+        required: false,
         options: [
           { label: 'Excel', value: 'xlsx' },
           { label: 'Word', value: 'docx' },
@@ -197,6 +202,22 @@ export const BUILTIN_EDUCATION_SCENES = [
     sourceRequirements: [{ capability: 'read', acceptedKinds: ['user_file'], required: true }],
     outputContracts: [
       { id: 'organized-document', label: '文档整理产物', mediaType: 'application/octet-stream', required: true }
+    ],
+    createdAt: BUILTIN_CREATED_AT,
+    updatedAt: BUILTIN_CREATED_AT
+  },
+  {
+    id: 'scene:general-research-task',
+    name: '自由教研任务',
+    description: '从一段清晰目标和可选参考资料开始，由教研助手组织执行步骤和产物。',
+    ownership: 'builtin',
+    version: 1,
+    purposeMode: 'required',
+    roleTemplateId: 'role:teaching-research',
+    intake: [],
+    sourceRequirements: [],
+    outputContracts: [
+      { id: 'general-research-artifact', label: '与任务目标匹配的教研产物', mediaType: 'application/octet-stream', required: true }
     ],
     createdAt: BUILTIN_CREATED_AT,
     updatedAt: BUILTIN_CREATED_AT

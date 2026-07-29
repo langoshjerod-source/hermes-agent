@@ -1,7 +1,9 @@
 import { PROMPT_SUBMIT_REQUEST_TIMEOUT_MS } from '@/hermes'
+import { attachmentDisplayText } from '@/lib/chat-runtime'
 import type { SessionCreateResponse } from '@/types/hermes'
 
-import type { EducationTask } from '../domain/task'
+import { uploadComposerAttachment } from '../../session/hooks/use-prompt-actions'
+import type { EducationTask, TaskInputAttachment } from '../domain/task'
 import { transitionTask } from '../domain/task'
 import { educationSourceDefinition, educationSourceGoalContext } from '../sources/catalog'
 
@@ -48,6 +50,16 @@ export function educationTaskGoal(task: EducationTask): string {
     })
     .join('\n')
 
+  const attachmentLines = (task.inputAttachments ?? []).flatMap(attachment => {
+    const reference = attachmentDisplayText(attachment)
+
+    return reference ? [`- ${attachment.label}: ${reference}`] : []
+  })
+
+  const attachmentContext = attachmentLines.length
+    ? attachmentLines.join('\n')
+    : '- 未提供（参考资料为可选项；需要资料才能完成时再向用户询问）'
+
   return [
     `完成教研任务：${task.title}`,
     '',
@@ -61,6 +73,9 @@ export function educationTaskGoal(task: EducationTask): string {
     '已确认的任务信息：',
     inputs,
     '',
+    '用户参考资料：',
+    attachmentContext,
+    '',
     '数据来源执行上下文：',
     educationSourceGoalContext(task.sourceBindings),
     '',
@@ -69,6 +84,7 @@ export function educationTaskGoal(task: EducationTask): string {
     '',
     '执行约束：',
     '- 先使用场景要求的数据来源和能力。',
+    '- 未指定数据来源、册次、教材版本或产物格式时，将其视为可选偏好；根据明确目标和可用能力处理，只有真实歧义会影响结果时才向用户确认。',
     '- SCENE_INTAKE_CONFIRMED 表示用户已在场景确认页确认结构化字段；这些字段是唯一范围依据，不从 purpose 或补充说明重新解析年级、学科、版本或册次。',
     '- Skill 若要求目的确认令牌，可在参数完全一致时内部取得并继续，不得让用户重复确认相同范围；真实版本候选或来源歧义仍必须询问。',
     '- Skill 安装目录是只读发布物，不得写入 probe、缓存、临时脚本或产物；所有文件写入工作区输出目录。',
@@ -129,8 +145,6 @@ export async function startEducationTask(
     throw new Error('Education task has no Hermes connection identity')
   }
 
-  const goal = educationTaskGoal(task)
-
   const created = await requestGateway<SessionCreateResponse>('session.create', {
     cols: 96,
     profile: task.hermes.profile,
@@ -149,6 +163,29 @@ export async function startEducationTask(
 
   onSessionCreated?.(boundTask)
 
+  const uploadedAttachments: TaskInputAttachment[] = []
+
+  for (const attachment of task.inputAttachments ?? []) {
+    uploadedAttachments.push(
+      (await uploadComposerAttachment(attachment, {
+        remote: task.hermes.connectionScope.startsWith('remote:'),
+        requestGateway,
+        sessionId: created.session_id
+      })) as TaskInputAttachment
+    )
+  }
+
+  const taskWithAttachments: EducationTask = {
+    ...boundTask,
+    inputAttachments: uploadedAttachments
+  }
+
+  if (uploadedAttachments.length) {
+    onSessionCreated?.(taskWithAttachments)
+  }
+
+  const goal = educationTaskGoal(taskWithAttachments)
+
   const dispatch = await requestGateway<GoalDispatchResponse>('slash.exec', {
     session_id: created.session_id,
     command: `goal ${goal}`
@@ -160,11 +197,19 @@ export async function startEducationTask(
     throw new Error('Hermes goal command did not return a kickoff message')
   }
 
+  const attachmentReferences = uploadedAttachments
+    .map(attachment => attachmentDisplayText(attachment))
+    .filter((reference): reference is string => Boolean(reference))
+
+  const kickoffWithAttachments = attachmentReferences.length
+    ? `${kickoff}\n\n本任务已经上传以下参考资料：\n${attachmentReferences.map(reference => `- ${reference}`).join('\n')}`
+    : kickoff
+
   await requestGateway(
     'prompt.submit',
-    { session_id: created.session_id, text: kickoff },
+    { session_id: created.session_id, text: kickoffWithAttachments },
     PROMPT_SUBMIT_REQUEST_TIMEOUT_MS
   )
 
-  return transitionTask(boundTask, 'running', now)
+  return transitionTask(taskWithAttachments, 'running', now)
 }

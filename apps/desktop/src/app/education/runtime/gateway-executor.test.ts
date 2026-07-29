@@ -41,9 +41,44 @@ describe('education gateway executor', () => {
   it('builds a source-safe goal without guessing textbook mappings', () => {
     const goal = educationTaskGoal(queuedTask())
 
-    expect(goal).toContain('purpose: 供老师审核并导入系统')
+    expect(goal).toContain('purpose: 按场景卡已确认的结构化范围')
     expect(goal).toContain('教材课程树与学科知识点树是独立产物')
     expect(goal).toContain('不得自行猜测')
+    expect(goal).toContain('xueke-textbook-knowledge-tree')
+    expect(goal).toContain('SCENE_INTAKE_CONFIRMED')
+  })
+
+  it('injects the executable Air Classroom Skill contract into the task goal', () => {
+    const task = queuedTask()
+
+    const airClassroomTask = {
+      ...task,
+      inputs: { ...task.inputs, source: 'source:air-classroom' },
+      sourceBindings: ['source:air-classroom']
+    }
+
+    const goal = educationTaskGoal(airClassroomTask)
+
+    expect(goal).toContain('shanghai-smartedu-catalog')
+    expect(goal).toContain('indexPanel 与 point/tree')
+    expect(goal).toContain('第一步只整理教材目录明细')
+  })
+
+  it('injects the dedicated official-resource contract for the national platform', () => {
+    const task = queuedTask()
+
+    const nationalTask = {
+      ...task,
+      inputs: { ...task.inputs, source: 'source:national-smartedu' },
+      sourceBindings: ['source:national-smartedu']
+    }
+
+    const goal = educationTaskGoal(nationalTask)
+
+    expect(goal).toContain('smartedu.cn')
+    expect(goal).toContain('national-smartedu-resource-catalog')
+    expect(goal).toContain('不冒充教材课程树或知识点树')
+    expect(goal).toContain('交付部分结果与缺口')
   })
 
   it('creates a Hermes session, sets a goal, and submits its kickoff', async () => {

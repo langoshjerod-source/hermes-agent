@@ -10,9 +10,22 @@ export const BUILTIN_EDUCATION_ROLES = [
     ownership: 'builtin',
     version: 1,
     profileSeed: null,
-    soul: '先确认用户的教研目的与来源范围。教材版本不明确时提供候选，不猜测。输出以可读产物为终点。',
+    soul: '以用户已确认的场景卡结构化字段为范围依据，不从补充说明重解范围。教材版本存在真实候选时提供候选，不猜测。输出以可读产物为终点。',
     modelPolicy: { kind: 'profile-default' },
     capabilityIds: ['source.catalogue', 'source.read', 'artifact.xlsx'],
+    createdAt: BUILTIN_CREATED_AT,
+    updatedAt: BUILTIN_CREATED_AT
+  },
+  {
+    id: 'role:official-resource-discovery',
+    name: '官方资源导航助手',
+    description: '在国家智慧教育平台发现教材、同步课程和专题资源的官方入口。',
+    ownership: 'builtin',
+    version: 1,
+    profileSeed: null,
+    soul: '只在官方域名和官方跳转链中发现资源。区分导航标签、资源列表和真实目录层级；证据不足时保留缺口，不把导航清单命名为教材课程树或知识点树。',
+    modelPolicy: { kind: 'profile-default' },
+    capabilityIds: ['source.search', 'source.read', 'artifact.xlsx'],
     createdAt: BUILTIN_CREATED_AT,
     updatedAt: BUILTIN_CREATED_AT
   },

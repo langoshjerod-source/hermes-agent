@@ -32,6 +32,7 @@ export interface SceneOutputContract {
 
 export interface ScenePackage extends VersionedTemplate {
   description: string
+  purposeMode?: 'required' | 'structured'
   roleTemplateId: string
   intake: IntakeField[]
   sourceRequirements: SceneSourceRequirement[]
@@ -49,6 +50,7 @@ export interface SceneUpdate {
   intake?: IntakeField[]
   name?: string
   outputContracts?: SceneOutputContract[]
+  purposeMode?: 'required' | 'structured'
   roleTemplateId?: string
   sourceRequirements?: SceneSourceRequirement[]
 }
@@ -69,6 +71,7 @@ export interface SceneExecutionSnapshot {
     id: string
     name: string
     version: number
+    purposeMode?: 'required' | 'structured'
     intake: IntakeField[]
     sourceRequirements: SceneSourceRequirement[]
     outputContracts: SceneOutputContract[]
@@ -146,6 +149,7 @@ export function snapshotSceneExecution(
       id: scene.id,
       name: scene.name,
       version: scene.version,
+      purposeMode: scene.purposeMode,
       intake: cloneIntake(scene.intake),
       sourceRequirements: cloneSourceRequirements(scene.sourceRequirements),
       outputContracts: cloneOutputContracts(scene.outputContracts)

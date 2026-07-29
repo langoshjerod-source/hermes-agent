@@ -3113,6 +3113,8 @@ export const zh: Translations = {
       courseTreeDescription: '按教材版本和册次整理“单元—课程”Excel 目录树。',
       knowledgeTreeName: '学科知识点树',
       knowledgeTreeDescription: '按学段和学科整理学科层级知识结构。',
+      nationalResourceName: '国家平台教材资源发现',
+      nationalResourceDescription: '整理国家平台官方教材与同步课程入口，不把导航清单冒充课程树。',
       documentName: '文档整理',
       documentDescription: '把 PDF、Word 和图片批量整理成可读的结构化产物。',
       start: '开始整理'

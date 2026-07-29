@@ -30,9 +30,10 @@ export function TaskComposer({
   const [purpose, setPurpose] = useState('')
   const [values, setValues] = useState<Record<string, unknown>>({})
   const [reviewing, setReviewing] = useState(false)
+  const usesStructuredPurpose = scene.purposeMode === 'structured'
 
   const missing = useMemo(() => missingRequiredIntake(scene, values), [scene, values])
-  const complete = Boolean(purpose.trim()) && missing.length === 0
+  const complete = (usesStructuredPurpose || Boolean(purpose.trim())) && missing.length === 0
 
   const setValue = (fieldId: string, value: unknown) => {
     setValues(current => ({ ...current, [fieldId]: value }))
@@ -67,7 +68,14 @@ export function TaskComposer({
         <h2 className="text-base font-semibold text-(--ui-text-primary)">{copy.confirmTitle}</h2>
         <p className="mt-2 max-w-[65ch] text-sm leading-6 text-(--ui-text-secondary)">{copy.confirmDescription}</p>
         <dl className="mt-6 divide-y divide-(--ui-stroke-tertiary) border-y border-(--ui-stroke-tertiary)">
-          <ReviewRow label={copy.purpose} value={purpose} />
+          <ReviewRow
+            label={copy.purpose}
+            value={
+              usesStructuredPurpose
+                ? `按下列已确认范围完成“${scene.name}”并交付约定产物`
+                : purpose
+            }
+          />
           {scene.intake.map(field => (
             <ReviewRow key={field.id} label={field.label} value={displayValue(field, values[field.id])} />
           ))}
@@ -94,19 +102,21 @@ export function TaskComposer({
       onSubmit={submitDetails}
     >
       <div className="grid gap-5 sm:grid-cols-2">
-        <div className="sm:col-span-2">
-          <Field htmlFor="task-purpose" label={copy.purpose}>
-            <Textarea
-              className="min-h-24"
-              id="task-purpose"
-              onChange={event => setPurpose(event.target.value)}
-              placeholder={copy.purposePlaceholder}
-              required
-              value={purpose}
-            />
-            <FieldHint>{copy.requiredHint}</FieldHint>
-          </Field>
-        </div>
+        {!usesStructuredPurpose ? (
+          <div className="sm:col-span-2">
+            <Field htmlFor="task-purpose" label={copy.purpose}>
+              <Textarea
+                className="min-h-24"
+                id="task-purpose"
+                onChange={event => setPurpose(event.target.value)}
+                placeholder={copy.purposePlaceholder}
+                required
+                value={purpose}
+              />
+              <FieldHint>{copy.requiredHint}</FieldHint>
+            </Field>
+          </div>
+        ) : null}
         {scene.intake.map(field => (
           <IntakeControl
             field={field}

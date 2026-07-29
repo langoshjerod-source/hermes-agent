@@ -2602,6 +2602,8 @@ export const ar = defineLocale({
       courseTreeDescription: 'تنظيم الوحدات والدروس حسب إصدار الكتاب والفصل في ملف Excel.',
       knowledgeTreeName: 'شجرة معرفة المادة',
       knowledgeTreeDescription: 'تنظيم بنية المعرفة حسب المرحلة والمادة.',
+      nationalResourceName: 'اكتشاف موارد المنصة الوطنية',
+      nationalResourceDescription: 'العثور على روابط الكتب والدروس الرسمية دون تقديم قائمة الروابط كشجرة مقررات.',
       documentName: 'تنظيم المستندات',
       documentDescription: 'تحويل ملفات PDF وWord والصور إلى مخرجات منظمة ومقروءة.',
       start: 'بدء'

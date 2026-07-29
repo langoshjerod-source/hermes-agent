@@ -24,7 +24,12 @@ export function missingRequiredIntake(scene: ScenePackage, values: Record<string
 }
 
 export function prepareEducationTask(input: PrepareEducationTaskInput): EducationTask {
-  const purpose = input.purpose.trim()
+  const purpose =
+    input.scene.purposeMode === 'structured'
+      ? `按场景卡已确认的结构化范围完成“${input.scene.name}”，并交付：${input.scene.outputContracts
+          .map(output => output.label)
+          .join('、')}`
+      : input.purpose.trim()
 
   if (!purpose) {
     throw new Error('Education task purpose is required')

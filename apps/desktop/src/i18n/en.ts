@@ -2953,6 +2953,8 @@ export const en: Translations = {
       courseTreeDescription: 'Organize edition and volume into a unit–lesson Excel tree.',
       knowledgeTreeName: 'Subject knowledge tree',
       knowledgeTreeDescription: 'Organize the subject-level knowledge structure by stage and subject.',
+      nationalResourceName: 'National platform resource discovery',
+      nationalResourceDescription: 'Find official textbook and synchronized-course entries without presenting links as a course tree.',
       documentName: 'Document organization',
       documentDescription: 'Turn PDF, Word, and image batches into readable structured outputs.',
       start: 'Start'

@@ -1,4 +1,9 @@
 import type { ScenePackage } from '../domain/scene'
+import {
+  NATIONAL_SMARTEDU_SOURCE_OPTIONS,
+  SUBJECT_KNOWLEDGE_SOURCE_OPTIONS,
+  TEXTBOOK_CATALOGUE_SOURCE_OPTIONS
+} from '../sources/catalog'
 
 const BUILTIN_CREATED_AT = '2026-07-29T00:00:00Z'
 
@@ -26,15 +31,27 @@ const COMMON_SUBJECT_FIELDS: ScenePackage['intake'] = [
   }
 ]
 
-const SOURCE_FIELD: ScenePackage['intake'][number] = {
+const TEXTBOOK_SOURCE_FIELD: ScenePackage['intake'][number] = {
   id: 'source',
   kind: 'source-select',
   label: '数据来源',
   required: true,
-  options: [
-    { label: '学科网', value: 'source:xueke' },
-    { label: '已配置教材来源', value: 'source:configured-textbook' }
-  ]
+  options: [...TEXTBOOK_CATALOGUE_SOURCE_OPTIONS]
+}
+
+const KNOWLEDGE_SOURCE_FIELD: ScenePackage['intake'][number] = {
+  ...TEXTBOOK_SOURCE_FIELD,
+  options: [...SUBJECT_KNOWLEDGE_SOURCE_OPTIONS]
+}
+
+const GRADE_FIELD: ScenePackage['intake'][number] = {
+  id: 'grade',
+  kind: 'select',
+  label: '年级',
+  required: true,
+  options: ['一年级', '二年级', '三年级', '四年级', '五年级', '六年级', '七年级', '八年级', '九年级'].map(
+    value => ({ label: value, value })
+  )
 }
 
 export const BUILTIN_EDUCATION_SCENES = [
@@ -44,18 +61,11 @@ export const BUILTIN_EDUCATION_SCENES = [
     description: '按教材版本和册次整理“单元—课程”Excel 目录树。',
     ownership: 'builtin',
     version: 1,
+    purposeMode: 'structured',
     roleTemplateId: 'role:textbook-structure',
     intake: [
       ...COMMON_SUBJECT_FIELDS,
-      {
-        id: 'grade',
-        kind: 'select',
-        label: '年级',
-        required: true,
-        options: ['一年级', '二年级', '三年级', '四年级', '五年级', '六年级', '七年级', '八年级', '九年级'].map(
-          value => ({ label: value, value })
-        )
-      },
+      GRADE_FIELD,
       {
         id: 'edition',
         kind: 'text',
@@ -73,9 +83,15 @@ export const BUILTIN_EDUCATION_SCENES = [
           { label: '下册', value: 'lower' }
         ]
       },
-      SOURCE_FIELD
+      TEXTBOOK_SOURCE_FIELD
     ],
-    sourceRequirements: [{ capability: 'catalogue', acceptedKinds: ['xueke', 'private_textbook'], required: true }],
+    sourceRequirements: [
+      {
+        capability: 'catalogue',
+        acceptedKinds: ['xueke', 'shanghai_smartedu', 'private_textbook'],
+        required: true
+      }
+    ],
     outputContracts: [
       {
         id: 'textbook-course-tree-xlsx',
@@ -93,8 +109,9 @@ export const BUILTIN_EDUCATION_SCENES = [
     description: '按学段和学科整理学科层级知识结构。',
     ownership: 'builtin',
     version: 1,
+    purposeMode: 'structured',
     roleTemplateId: 'role:textbook-structure',
-    intake: [...COMMON_SUBJECT_FIELDS, SOURCE_FIELD],
+    intake: [...COMMON_SUBJECT_FIELDS, KNOWLEDGE_SOURCE_FIELD],
     sourceRequirements: [{ capability: 'catalogue', acceptedKinds: ['xueke', 'private_textbook'], required: true }],
     outputContracts: [
       {
@@ -108,14 +125,62 @@ export const BUILTIN_EDUCATION_SCENES = [
     updatedAt: BUILTIN_CREATED_AT
   },
   {
+    id: 'scene:national-smartedu-resource-discovery',
+    name: '国家平台教材资源发现',
+    description: '按学段、年级、学科和册次整理国家平台官方教材与同步课程导航，不把导航清单冒充课程树。',
+    ownership: 'builtin',
+    version: 1,
+    purposeMode: 'structured',
+    roleTemplateId: 'role:official-resource-discovery',
+    intake: [
+      ...COMMON_SUBJECT_FIELDS,
+      GRADE_FIELD,
+      {
+        id: 'edition',
+        kind: 'text',
+        label: '教材版本或出版社',
+        description: '可填写版本检索词；多个真实候选会要求确认。',
+        required: false
+      },
+      {
+        id: 'volumes',
+        kind: 'multi-select',
+        label: '册次',
+        required: true,
+        options: [
+          { label: '上册', value: 'upper' },
+          { label: '下册', value: 'lower' }
+        ]
+      },
+      {
+        id: 'source',
+        kind: 'source-select',
+        label: '数据来源',
+        required: true,
+        options: [...NATIONAL_SMARTEDU_SOURCE_OPTIONS]
+      }
+    ],
+    sourceRequirements: [{ capability: 'search', acceptedKinds: ['national_smartedu'], required: true }],
+    outputContracts: [
+      {
+        id: 'national-smartedu-resource-catalog-xlsx',
+        label: '国家平台官方资源导航 Excel',
+        mediaType: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        required: true
+      }
+    ],
+    createdAt: BUILTIN_CREATED_AT,
+    updatedAt: BUILTIN_CREATED_AT
+  },
+  {
     id: 'scene:document-organization',
     name: '文档整理',
     description: '把 PDF、Word 和图片批量整理成可读的结构化产物。',
     ownership: 'builtin',
     version: 1,
+    purposeMode: 'required',
     roleTemplateId: 'role:document-organization',
     intake: [
-      { id: 'purpose', kind: 'text', label: '整理目的', required: true },
       { id: 'files', kind: 'file-list', label: '资料文件', required: true },
       {
         id: 'outputFormat',

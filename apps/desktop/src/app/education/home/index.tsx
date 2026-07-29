@@ -1,15 +1,18 @@
+import { useQuery } from '@tanstack/react-query'
 import { type FormEvent, type ReactNode, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 
 import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/ui/empty-state'
 import { Input } from '@/components/ui/input'
+import { getSkills } from '@/hermes'
 import { useI18n } from '@/i18n'
-import { Brain, FileText, NotebookTabs } from '@/lib/icons'
+import { Brain, FileText, Globe, NotebookTabs } from '@/lib/icons'
 
 import { navigateToWorkspacePage } from '../../routes'
 import { EducationPageFrame } from '../page-frame'
 import { useEducationSnapshot } from '../repository/use-education-snapshot'
+import { EDUCATION_SOURCE_CATALOG, resolveEducationSourceAvailability } from '../sources/catalog'
 
 interface HomeScenario {
   description: string
@@ -63,6 +66,12 @@ export function EducationHome() {
       icon: <Brain aria-hidden className="size-5" />
     },
     {
+      id: 'scene:national-smartedu-resource-discovery',
+      name: copy.scenario.nationalResourceName,
+      description: copy.scenario.nationalResourceDescription,
+      icon: <Globe aria-hidden className="size-5" />
+    },
+    {
       id: 'scene:document-organization',
       name: copy.scenario.documentName,
       description: copy.scenario.documentDescription,
@@ -71,6 +80,11 @@ export function EducationHome() {
   ]
 
   const activeTasks = snapshot?.tasks.filter(task => ['queued', 'running', 'waiting_input'].includes(task.state)) ?? []
+  const { data: installedSkills = [] } = useQuery({ queryKey: ['skills-list'], queryFn: getSkills })
+
+  const availableSources = EDUCATION_SOURCE_CATALOG.filter(
+    source => resolveEducationSourceAvailability(source, installedSkills).state === 'available'
+  ).length
 
   const submitIntent = (event: FormEvent) => {
     event.preventDefault()
@@ -138,7 +152,9 @@ export function EducationHome() {
           </section>
           <section className="border-t border-(--ui-stroke-tertiary) pt-6">
             <h2 className="text-sm font-semibold text-(--ui-text-primary)">{copy.home.sourceTitle}</h2>
-            <p className="mt-2 text-sm text-(--ui-text-secondary)">{copy.home.sourceSummary(3, 4)}</p>
+            <p className="mt-2 text-sm text-(--ui-text-secondary)">
+              {copy.home.sourceSummary(availableSources, EDUCATION_SOURCE_CATALOG.length)}
+            </p>
             <Button
               className="mt-3"
               onClick={() => navigateToWorkspacePage(navigate, '/sources')}

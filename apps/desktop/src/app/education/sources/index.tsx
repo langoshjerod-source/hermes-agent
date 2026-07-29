@@ -1,45 +1,22 @@
+import { useQuery } from '@tanstack/react-query'
+
+import { getSkills } from '@/hermes'
 import { useI18n } from '@/i18n'
 
-import type { EducationSource, EducationSourceCapability } from '../domain/source'
+import type { EducationSourceCapability } from '../domain/source'
 import { toTeacherSourceView } from '../domain/source'
 import { EducationPageFrame } from '../page-frame'
 
-const INITIAL_SOURCES: EducationSource[] = [
-  {
-    id: 'source:xueke',
-    kind: 'xueke',
-    capabilities: ['catalogue', 'read'],
-    state: 'available',
-    supportedScope: '教材课程树、学科知识点树、专项突破'
-  },
-  {
-    id: 'source:knowledge-base',
-    kind: 'knowledge_base',
-    capabilities: ['search', 'read'],
-    state: 'available',
-    supportedScope: '已收录教材与教研资料',
-    technicalProvider: 'RAGFlow'
-  },
-  {
-    id: 'source:web-search',
-    kind: 'web_search',
-    capabilities: ['search', 'read'],
-    state: 'available',
-    supportedScope: '公开互联网资料'
-  },
-  {
-    id: 'source:user-files',
-    kind: 'user_file',
-    capabilities: ['read'],
-    state: 'available',
-    supportedScope: 'PDF、Word、图片等用户文件'
-  }
-]
+import { EDUCATION_SOURCE_CATALOG, resolveEducationSourceAvailability } from './catalog'
 
 export function EducationSources() {
   const { t } = useI18n()
   const copy = t.education
-  const sources = INITIAL_SOURCES.map(toTeacherSourceView)
+  const { data: installedSkills = [] } = useQuery({ queryKey: ['skills-list'], queryFn: getSkills })
+
+  const sources = EDUCATION_SOURCE_CATALOG.map(source =>
+    toTeacherSourceView(resolveEducationSourceAvailability(source, installedSkills))
+  )
 
   const capabilityLabel: Record<EducationSourceCapability, string> = {
     catalogue: copy.sources.capabilityCatalogue,

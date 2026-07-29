@@ -2689,6 +2689,8 @@ export const zhHant = defineLocale({
       courseTreeDescription: '按教材版本和冊次整理「單元—課程」Excel 目錄樹。',
       knowledgeTreeName: '學科知識點樹',
       knowledgeTreeDescription: '按學段和學科整理學科層級知識結構。',
+      nationalResourceName: '國家平台教材資源發現',
+      nationalResourceDescription: '整理國家平台官方教材與同步課程入口，不把導航清單冒充課程樹。',
       documentName: '文件整理',
       documentDescription: '把 PDF、Word 和圖片批次整理成可讀的結構化產物。',
       start: '開始整理'

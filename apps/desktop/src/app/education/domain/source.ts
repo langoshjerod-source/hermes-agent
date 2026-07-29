@@ -1,6 +1,14 @@
 export type EducationSourceCapability = 'catalogue' | 'read' | 'refresh' | 'search'
 
-export type EducationSourceKind = 'knowledge_base' | 'private_textbook' | 'url' | 'user_file' | 'web_search' | 'xueke'
+export type EducationSourceKind =
+  | 'knowledge_base'
+  | 'national_smartedu'
+  | 'private_textbook'
+  | 'shanghai_smartedu'
+  | 'url'
+  | 'user_file'
+  | 'web_search'
+  | 'xueke'
 
 export type EducationSourceState =
   | 'authentication_required'
@@ -31,7 +39,9 @@ export interface TeacherSourceView {
 
 const TEACHER_SOURCE_LABELS: Record<EducationSourceKind, string> = {
   knowledge_base: '知识库',
+  national_smartedu: '国家智慧教育平台',
   private_textbook: '已配置教材来源',
+  shanghai_smartedu: '空中课堂',
   url: '网页地址',
   user_file: '我的文件',
   web_search: '联网搜索',

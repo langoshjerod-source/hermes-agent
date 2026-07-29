@@ -5,6 +5,8 @@ import { type EducationSource, toTeacherSourceView } from './source'
 describe('teacher-facing education sources', () => {
   it.each([
     ['xueke', '学科网'],
+    ['shanghai_smartedu', '空中课堂'],
+    ['national_smartedu', '国家智慧教育平台'],
     ['knowledge_base', '知识库'],
     ['web_search', '联网搜索'],
     ['user_file', '我的文件'],

@@ -41,23 +41,27 @@ describe('education task preparation', () => {
     })
 
     expect(task.state).toBe('ready')
-    expect(task.inputs).toMatchObject({ ...values, purpose: '整理供老师核对并导入的目录树' })
+    expect(task.inputs).toMatchObject({
+      ...values,
+      purpose: '按场景卡已确认的结构化范围完成“教材课程树”，并交付：教材课程树 Excel'
+    })
     expect(task.sourceBindings).toEqual(['source:xueke'])
     expect(task.sceneSnapshot?.scene.id).toBe(scene.id)
     expect(task.sceneSnapshot?.role.id).toBe(role.id)
   })
 
-  it('requires a clear purpose before creating a task', () => {
-    expect(() =>
-      prepareEducationTask({
-        id: 'task:1',
-        purpose: '  ',
-        scene,
-        role,
-        values,
-        createdAt: NOW,
-        hermes: { connectionScope: 'local', profile: 'default' }
-      })
-    ).toThrow(/purpose is required/)
+  it('uses the confirmed structured scene scope instead of conflicting free text', () => {
+    const task = prepareEducationTask({
+      id: 'task:1',
+      purpose: '这里误写了二年级',
+      scene,
+      role,
+      values,
+      createdAt: NOW,
+      hermes: { connectionScope: 'local', profile: 'default' }
+    })
+
+    expect(task.inputs.purpose).not.toContain('二年级')
+    expect(task.inputs.grade).toBe('五年级')
   })
 })

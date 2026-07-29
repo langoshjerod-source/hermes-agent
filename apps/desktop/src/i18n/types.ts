@@ -2512,6 +2512,8 @@ export interface Translations {
       courseTreeDescription: string
       knowledgeTreeName: string
       knowledgeTreeDescription: string
+      nationalResourceName: string
+      nationalResourceDescription: string
       documentName: string
       documentDescription: string
       start: string

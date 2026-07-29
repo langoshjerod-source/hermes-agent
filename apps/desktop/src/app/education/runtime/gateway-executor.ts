@@ -3,6 +3,7 @@ import type { SessionCreateResponse } from '@/types/hermes'
 
 import type { EducationTask } from '../domain/task'
 import { transitionTask } from '../domain/task'
+import { educationSourceDefinition, educationSourceGoalContext } from '../sources/catalog'
 
 export type EducationGatewayRequest = <T>(
   method: string,
@@ -34,7 +35,17 @@ export function educationTaskGoal(task: EducationTask): string {
     .join('\n')
 
   const inputs = Object.entries(task.inputs)
-    .map(([key, value]) => `- ${key}: ${Array.isArray(value) ? value.join('、') : String(value)}`)
+    .map(([key, value]) => {
+      const rendered = Array.isArray(value) ? value.join('、') : String(value)
+
+      if (key !== 'source') {
+        return `- ${key}: ${rendered}`
+      }
+
+      const source = educationSourceDefinition(rendered)
+
+      return `- ${key}: ${source ? `${source.id}（${source.kind}）` : rendered}`
+    })
     .join('\n')
 
   return [
@@ -43,15 +54,24 @@ export function educationTaskGoal(task: EducationTask): string {
     `场景：${snapshot.scene.name}`,
     `角色：${snapshot.role.name}`,
     `角色工作要求：${snapshot.role.soul}`,
+    `场景卡确认状态：${
+      snapshot.scene.purposeMode === 'structured' ? 'SCENE_INTAKE_CONFIRMED' : 'USER_PURPOSE_PROVIDED'
+    }`,
     '',
     '已确认的任务信息：',
     inputs,
+    '',
+    '数据来源执行上下文：',
+    educationSourceGoalContext(task.sourceBindings),
     '',
     '必须交付：',
     requiredOutputs,
     '',
     '执行约束：',
     '- 先使用场景要求的数据来源和能力。',
+    '- SCENE_INTAKE_CONFIRMED 表示用户已在场景确认页确认结构化字段；这些字段是唯一范围依据，不从 purpose 或补充说明重新解析年级、学科、版本或册次。',
+    '- Skill 若要求目的确认令牌，可在参数完全一致时内部取得并继续，不得让用户重复确认相同范围；真实版本候选或来源歧义仍必须询问。',
+    '- Skill 安装目录是只读发布物，不得写入 probe、缓存、临时脚本或产物；所有文件写入工作区输出目录。',
     '- 教材版本或范围存在多个真实候选时，停止并请用户确认，不得自行猜测。',
     '- 教材课程树与学科知识点树是独立产物，不按名称推测二者映射。',
     '- 来源确实不提供下册时，作为正常范围缺失写入备注，不得伪造。',

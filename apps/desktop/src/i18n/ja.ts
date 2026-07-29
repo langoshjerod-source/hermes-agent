@@ -2802,6 +2802,8 @@ export const ja = defineLocale({
       courseTreeDescription: '教材版と学期から「単元—授業」の Excel ツリーを整理します。',
       knowledgeTreeName: '教科知識ツリー',
       knowledgeTreeDescription: '学段と教科に基づいて知識構造を整理します。',
+      nationalResourceName: '国家プラットフォーム教材リソース検索',
+      nationalResourceDescription: '公式教材と同期授業の入口を整理し、リンク一覧をコースツリーとして扱いません。',
       documentName: '文書整理',
       documentDescription: 'PDF、Word、画像を読みやすい構造化成果物に整理します。',
       start: '開始'

@@ -6,7 +6,7 @@ import { collectArtifactCandidates } from '@/app/artifacts/artifact-utils'
 import { useGatewayRequest } from '@/app/gateway/hooks/use-gateway-request'
 import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/ui/empty-state'
-import { getSessionMessages } from '@/hermes'
+import { getSessionMessages, getSkills } from '@/hermes'
 import { useI18n } from '@/i18n'
 import { $clarifyRequests, clearClarifyRequest } from '@/store/clarify'
 import { ensureGatewayProfile } from '@/store/profile'
@@ -21,6 +21,7 @@ import { finishEducationTask } from '../runtime/artifact-reconciler'
 import { inspectEducationGoalStatus, startEducationTask } from '../runtime/gateway-executor'
 import { reconcileEducationTasks } from '../runtime/task-state-reconciler'
 import { builtinEducationScene } from '../scenarios/builtin-scenes'
+import { missingEducationSourceSkills } from '../sources/catalog'
 import { builtinEducationRole } from '../templates/builtin-roles'
 
 import { TaskComposer } from './task-composer'
@@ -135,6 +136,13 @@ export function EducationTasks() {
 
     try {
       await ensureGatewayProfile(task.hermes?.profile ?? scope.profile)
+
+      const installedSkills = await getSkills()
+      const missingSkills = missingEducationSourceSkills(task.sourceBindings, installedSkills)
+
+      if (missingSkills.length) {
+        throw new Error(`当前 Hermes 实例尚未配置所需 Skill：${missingSkills.join('、')}`)
+      }
 
       const running = await startEducationTask(requestGateway, queued, new Date().toISOString(), boundTask => {
         executingTask = boundTask

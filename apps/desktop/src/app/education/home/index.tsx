@@ -7,7 +7,7 @@ import { EmptyState } from '@/components/ui/empty-state'
 import { Textarea } from '@/components/ui/textarea'
 import { getSkills } from '@/hermes'
 import { useI18n } from '@/i18n'
-import { Brain, FileText, Globe, NotebookTabs } from '@/lib/icons'
+import { ArrowUp, Brain, FileText, Globe, NotebookTabs, Sparkles } from '@/lib/icons'
 
 import { navigateToWorkspacePage } from '../../routes'
 import type { TaskInputAttachment } from '../domain/task'
@@ -109,27 +109,37 @@ export function EducationHome() {
 
   return (
     <EducationPageFrame description={copy.home.description} eyebrow={copy.home.eyebrow} title={copy.home.title}>
-      <form className="mt-8 max-w-3xl space-y-3" onSubmit={submitIntent}>
-        <div className="rounded-lg border border-(--ui-stroke-tertiary) bg-(--ui-bg-primary) p-3 shadow-sm">
+      <form className="mt-8 max-w-3xl" onSubmit={submitIntent}>
+        <div className="group overflow-hidden rounded-2xl border border-(--ui-stroke-secondary) bg-(--ui-chat-bubble-background) shadow-[0_18px_50px_-32px_color-mix(in_srgb,var(--theme-primary)_45%,transparent),0_2px_12px_-8px_rgba(16,44,35,0.22)] transition-[border-color,box-shadow] duration-200 focus-within:border-(--theme-primary)/55 focus-within:shadow-[0_22px_60px_-30px_color-mix(in_srgb,var(--theme-primary)_55%,transparent),0_0_0_3px_color-mix(in_srgb,var(--theme-primary)_10%,transparent)]">
+          <div className="flex items-center gap-2 px-5 pt-4 text-xs font-medium text-(--theme-primary)">
+            <span className="grid size-6 place-items-center rounded-full bg-(--theme-primary)/10">
+              <Sparkles aria-hidden className="size-3.5" />
+            </span>
+            描述你想完成的教研任务
+          </div>
           <Textarea
             aria-label={copy.home.intentPlaceholder}
-            className="min-h-28 resize-y border-0 bg-transparent px-1 py-1 text-base shadow-none focus-visible:ring-0"
+            className="min-h-32 resize-none !border-transparent !bg-transparent px-5 py-4 text-[17px] leading-7 !shadow-none placeholder:text-(--ui-text-tertiary)/75 focus-visible:ring-0"
             onChange={event => setIntent(event.target.value)}
             placeholder={copy.home.intentPlaceholder}
             value={intent}
           />
-          <div className="mt-3 border-t border-(--ui-stroke-tertiary) pt-3">
-            <TaskAttachmentPicker attachments={inputAttachments} onChange={setInputAttachments} />
-          </div>
-          <div className="mt-3 flex flex-col gap-2 border-t border-(--ui-stroke-tertiary) pt-3 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-xs leading-5 text-(--ui-text-tertiary)">
-              目标需要说清希望完成什么；附件、格式和其他筛选项都可以稍后补充。
-            </p>
-            <Button className="shrink-0" disabled={!intent.trim()} size="lg" type="submit">
+          <div className="mx-3 mb-3 flex flex-col gap-2 rounded-xl bg-[color-mix(in_srgb,var(--ui-chat-surface-background)_65%,var(--ui-chat-bubble-background))] p-2 sm:flex-row sm:items-end sm:justify-between">
+            <TaskAttachmentPicker appearance="compact" attachments={inputAttachments} onChange={setInputAttachments} />
+            <Button
+              className="h-10 shrink-0 gap-2 rounded-xl px-4 shadow-[0_8px_20px_-12px_var(--theme-primary)]"
+              disabled={!intent.trim()}
+              size="lg"
+              type="submit"
+            >
               {copy.home.intentAction}
+              <ArrowUp aria-hidden className="size-4" />
             </Button>
           </div>
         </div>
+        <p className="mt-2.5 px-1 text-xs leading-5 text-(--ui-text-tertiary)">
+          先说清想要的结果，资料、格式和筛选条件可以稍后补充。
+        </p>
       </form>
 
       <div className="mt-10 grid grid-cols-1 gap-10 xl:grid-cols-[minmax(0,1fr)_18rem]">

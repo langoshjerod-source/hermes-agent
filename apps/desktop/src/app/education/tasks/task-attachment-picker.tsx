@@ -1,7 +1,8 @@
 import { Button } from '@/components/ui/button'
 import { attachmentId, pathLabel } from '@/lib/chat-runtime'
 import { selectDesktopPaths } from '@/lib/desktop-fs'
-import { FileText, ImageIcon, Plus, XIcon } from '@/lib/icons'
+import { FileText, ImageIcon, Paperclip, Plus, XIcon } from '@/lib/icons'
+import { cn } from '@/lib/utils'
 import { notifyError } from '@/store/notifications'
 
 import type { TaskInputAttachment } from '../domain/task'
@@ -10,10 +11,12 @@ const IMAGE_PATH_PATTERN = /\.(?:avif|bmp|gif|jpe?g|png|svg|tiff?|webp)$/i
 
 export function TaskAttachmentPicker({
   attachments,
+  appearance = 'card',
   label = '参考资料',
   onChange,
   required = false
 }: {
+  appearance?: 'card' | 'compact'
   attachments: TaskInputAttachment[]
   label?: string
   onChange: (attachments: TaskInputAttachment[]) => void
@@ -63,27 +66,41 @@ export function TaskAttachmentPicker({
   }
 
   return (
-    <section className="rounded-md border border-(--ui-stroke-tertiary) bg-(--ui-bg-secondary)/40 p-3">
+    <section
+      className={cn(
+        appearance === 'card' && 'rounded-md border border-(--ui-stroke-tertiary) bg-(--ui-bg-secondary)/40 p-3'
+      )}
+    >
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <div className="text-sm font-medium text-(--ui-text-primary)">
-            {label}
-            <span className="ml-1.5 text-xs font-normal text-(--ui-text-tertiary)">
-              {required ? '必填' : '可选'}
-            </span>
+        {appearance === 'card' ? (
+          <div>
+            <div className="text-sm font-medium text-(--ui-text-primary)">
+              {label}
+              <span className="ml-1.5 text-xs font-normal text-(--ui-text-tertiary)">{required ? '必填' : '可选'}</span>
+            </div>
+            <p className="mt-1 text-xs leading-5 text-(--ui-text-tertiary)">
+              支持 PDF、Word、Excel、图片和其他教研资料；执行时会安全传入当前任务会话。
+            </p>
           </div>
-          <p className="mt-1 text-xs leading-5 text-(--ui-text-tertiary)">
-            支持 PDF、Word、Excel、图片和其他教研资料；执行时会安全传入当前任务会话。
-          </p>
-        </div>
-        <Button onClick={() => void pickFiles()} size="sm" type="button" variant="outline">
-          <Plus aria-hidden className="size-4" />
-          添加文件
+        ) : null}
+        <Button
+          className={cn(appearance === 'compact' && 'rounded-full px-3 text-(--ui-text-secondary)')}
+          onClick={() => void pickFiles()}
+          size="sm"
+          type="button"
+          variant={appearance === 'compact' ? 'ghost' : 'outline'}
+        >
+          {appearance === 'compact' ? (
+            <Paperclip aria-hidden className="size-4" />
+          ) : (
+            <Plus aria-hidden className="size-4" />
+          )}
+          {appearance === 'compact' ? `${label}${required ? '' : '（可选）'}` : '添加文件'}
         </Button>
       </div>
 
       {attachments.length ? (
-        <ul className="mt-3 grid gap-2 sm:grid-cols-2">
+        <ul className={cn('mt-3 grid gap-2 sm:grid-cols-2', appearance === 'compact' && 'px-1')}>
           {attachments.map(attachment => {
             const Icon = attachment.kind === 'image' ? ImageIcon : FileText
 
